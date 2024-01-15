@@ -1,0 +1,15 @@
+{
+  "imports": {
+    "uuid": "npm:uuid@9.0.1",
+    "jose": "npm:jose@5.2.0",
+    "@microsoft/microsoft-graph-client": "npm:@microsoft/microsoft-graph-client@3.0.7",
+    "@azure/msal-node": "npm:@azure/msal-node@2.6.1",
+    "crypto-js": "npm:crypto-js@4.2.0",
+    "crypto-js/hmac-sha256": "npm:crypto-js@4.2.0/hmac-sha256.js",
+    "crypto-js/enc-base64": "npm:crypto-js@4.2.0/enc-base64.js",
+    "open": "npm:open@10.0.3",
+    "@azure/msal-node-extensions": "npm:@azure/msal-node-extensions@1.0.9",
+    "keytar": "npm:keytar"
+  },
+  "tasks": { "build-npm": "deno run -A scripts/buildNpm.ts" }
+}
