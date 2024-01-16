@@ -1,10 +1,11 @@
-import * as uuid from "uuid";
+// import * as uuid from "uuid";
 import { type CurrentUsage, RunEntry, RunId, coresToInstance, NCores, InstanceType, Phase, ProgressInfo, PublicRunningStatus, User } from "./coreTypes.ts";
 import { UserOrgInfo } from "./credentials.ts";
 import { DataVector, RunData } from "./getS3CSVData.ts";
 import { AuthProvider } from "./authProviders/mod.ts";
 export * from "./credentials.ts";
 export * from "./coreTypes.ts";
+export * from "./getS3CSVData.ts";
 export * from "./authProviders/mod.ts";
 export class ApiError extends Error { }
 
@@ -40,7 +41,8 @@ export interface RunFilter {
 export class ApiClient {
   private stage = "v3";
   public api_endpoint = new URL("https://api.smokecloud.io");
-  constructor(private authProvider: AuthProvider, public accountId: string, options?: {
+  public accountId?: string;
+  constructor(private authProvider: AuthProvider, options?: {
     stage?: string,
     api_endpoint?: string
   }) {
@@ -50,6 +52,10 @@ export class ApiClient {
     if (options?.api_endpoint) {
       this.api_endpoint = new URL(options.api_endpoint);
     }
+  }
+
+  public async init() {
+    this.accountId = await this.getAccountId();
   }
 
   private async request(method: string, path: string, useAccountId: boolean, body?: ReadableStream<Uint8Array> | string, opts?: RequestInit, queryParams?: Record<string, string>) {
@@ -75,6 +81,9 @@ export class ApiClient {
     }
     const url = new URL(`${this.api_endpoint}${path}`);
     if (useAccountId) {
+      if (!this.accountId) {
+        this.accountId = await this.getAccountId();
+      }
       url.pathname = `/${this.stage}/orgs/${this.accountId}${url.pathname}`;
     } else {
       url.pathname = `/${this.stage}${url.pathname}`;
@@ -92,6 +101,20 @@ export class ApiClient {
     } catch (e) {
       console.warn(`Failed: apiRequest[${method}]: ${url}`);
       throw e;
+    }
+  }
+
+  // TODO: could we have multiple organizations?
+  private async getAccountId(): Promise<string> {
+    const resp = await this.request("GET", "/me/account_id", false);
+    if (resp.ok) {
+      const accountId = await resp.json();
+      return accountId;
+    } else {
+      const errMsg = await resp.text();
+      console.error(errMsg);
+      throw new Error(errMsg);
+
     }
   }
 
@@ -223,7 +246,7 @@ export class ApiClient {
       const resp = await this.apiRequestRoot("POST", path, input, {
         headers: new Headers({
           // TODO: this is not actually used currently
-          "Idempotency-Key": uuid.v4(),
+          // "Idempotency-Key": uuid.v4(),
           "Content-Type": "application/octet-stream"
         })
       }, params);
@@ -231,9 +254,9 @@ export class ApiClient {
         if (resp.status === 409) {
           // There was a conflict, this means either it failed due to the
           // idempotency key or there is already an open model.
-          throw new Error(await resp.text())
+          throw new Error(await resp.json())
         } else {
-          throw new Error(await resp.text())
+          throw new Error(await resp.json())
         }
       }
       return (await resp.json()).data;

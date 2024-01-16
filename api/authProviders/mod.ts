@@ -1,9 +1,6 @@
 import { Configuration, PublicClientApplication } from "@azure/msal-browser";
-import { createConfig } from "./authConfig.ts";
+import { SCOPES, createConfig } from "./authConfig.ts";
 import { UserOrgInfo, getGraphClient } from "../credentials.ts";
-
-
-const SCOPES = ["User.Read", "email"];
 
 export interface AuthProvider {
   init: () => Promise<void>;

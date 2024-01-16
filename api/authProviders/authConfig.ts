@@ -1,5 +1,7 @@
 import { Configuration, LogLevel } from "@azure/msal-browser";
 
+export const SCOPES = ["User.Read", "email"];
+
 export function createConfig(clientId: string): Promise<Configuration> {
   if (!clientId) {
     throw new Error("no client id");
