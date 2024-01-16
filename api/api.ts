@@ -1,23 +1,33 @@
 import * as uuid from "uuid";
-import { type CurrentUsage, RunEntry, RunId, coresToInstance, NCores, InstanceType, Phase, ProgressInfo, PublicRunningStatus, User } from "./coreTypes.ts";
+import {
+  coresToInstance,
+  type CurrentUsage,
+  InstanceType,
+  NCores,
+  Phase,
+  ProgressInfo,
+  PublicRunningStatus,
+  RunBilling,
+  RunEntry,
+  RunId,
+  Snapshot,
+  User,
+} from "./coreTypes.ts";
 import { UserOrgInfo } from "./credentials.ts";
 import { DataVector, RunData } from "./getS3CSVData.ts";
 import { AuthProvider } from "./authProviders/mod.ts";
 export * from "./credentials.ts";
 export * from "./coreTypes.ts";
+export * from "./getS3CSVData.ts";
 export * from "./authProviders/mod.ts";
-export class ApiError extends Error { }
 
+export class ApiError extends Error {}
 export interface ScApiErrorResponse {
   errors: ScApiErrorObject[];
 }
-
 export interface ScApiErrorObject {
   id?: string;
-  links?: {
-    about?: string;
-    type?: string;
-  };
+  links?: { about?: string; type?: string };
   status?: string;
   code: string;
   title?: string;
@@ -28,7 +38,6 @@ export interface ScApiErrorObject {
     header?: string;
   };
   meta?: object;
-
 }
 
 export interface RunFilter {
@@ -38,114 +47,179 @@ export interface RunFilter {
 }
 
 export class ApiClient {
-  private stage = "v3";
-  public api_endpoint = new URL("https://api.smokecloud.io");
-  #passwordToken?: string;
-  // TODO: passing in the refreshToken callback is a bit hacky, should try and
-  // remove it.
-  constructor(private authProvider: AuthProvider, public accountId: string, options?: {
-    stage?: string,
-    api_endpoint?: string
+  public api_endpoint = new URL("https://api.smokecloud.io/v3");
+  public storage_endpoint = new URL("https://store01.smokecloud.io/v3");
+  public accountId?: string;
+  constructor(private authProvider: AuthProvider, options?: {
+    api_endpoint?: string;
+    storage_endpoint?: string;
   }) {
-    if (options?.stage) {
-      this.stage = options.stage;
-    }
     if (options?.api_endpoint) {
       this.api_endpoint = new URL(options.api_endpoint);
     }
+    if (options?.storage_endpoint) {
+      this.storage_endpoint = new URL(options.storage_endpoint);
+    }
   }
 
-  private async request(method: string, path: string, useAccountId: boolean, body?: ReadableStream<Uint8Array> | string, opts?: any, queryParams?: Record<string, string>) {
-    if (path.startsWith(`${this.stage}`)) {
-      path.slice(this.stage.length)
-    }
+  public async init() {
+    await this.authProvider.init();
+    this.accountId = await this.getAccountId();
+  }
+
+  async request(path: string, init?: RequestInit): Promise<Response> {
     const token = await this.authProvider.acquireToken();
-    const p = opts ? opts : {};
-    p.method = method;
-    const headers: Headers = new Headers();
+    const params = init ? init : {};
+    const headers: Headers = new Headers(init?.headers);
     headers.append("Content-Type", "application/json");
     headers.append("Access-Control-Request-Headers", "Location");
     headers.append(
       "Authorization",
       `Bearer ${token}`,
     );
-    if (p.headers) {
-      if (typeof p.headers.entries === "function") {
-        const iter = p.headers.entries();
-        for (const [k, v] of iter) {
-          if (typeof k === "string" && typeof v === "string") {
-            headers.append(k, v);
-          }
-        }
-      }
-    }
-    p.headers = headers;
-    if (body) {
-      p.body = body;
-    }
+    params.headers = headers;
     if (path.length !== 0 && !path.startsWith("/")) {
       path = `/${path}`;
     }
     const url = new URL(`${this.api_endpoint}${path}`);
-    if (useAccountId) {
-      url.pathname = `/${this.stage}/orgs/${this.accountId}${url.pathname}`;
-    } else {
-      url.pathname = `/${this.stage}${url.pathname}`;
-    }
-
-    if (queryParams) {
-      for (const k of Object.keys(queryParams)) {
-        url.searchParams.append(k, queryParams[k])
-      }
-    }
-    const request = new Request(`${url}`, p);
+    const request = new Request(`${url}`, params);
     try {
-      // TODO: this has issues with redirects as the authentication header is
-      // lost
-      const response = await fetch(request);
-      return response;
+      return await fetch(request);
     } catch (e) {
-      console.warn(`Failed: apiRequest[${method}]: ${url}`);
+      console.warn(`Failed: apiRequest[${params.method}]: ${url}`);
       throw e;
     }
   }
 
-  async apiRequestRoot(method: string, path: string, body?: ReadableStream<Uint8Array> | string, opts?: any, queryParams?: Record<string, string>) {
-    return await this.request(method, path, false, body, opts, queryParams);
+  async requestStorage(path: string, init?: RequestInit): Promise<Response> {
+    const token = await this.authProvider.acquireToken();
+    const params = init ? init : {};
+    const headers: Headers = new Headers(init?.headers);
+    headers.append("Content-Type", "application/json");
+    headers.append("Access-Control-Request-Headers", "Location");
+    headers.append(
+      "Authorization",
+      `Bearer ${token}`,
+    );
+    params.headers = headers;
+    if (path.length !== 0 && !path.startsWith("/")) {
+      path = `/${path}`;
+    }
+    const url = new URL(`${this.storage_endpoint}${path}`);
+    const request = new Request(`${url}`, params);
+    try {
+      return await fetch(request);
+    } catch (e) {
+      console.warn(`Failed: apiRequest[${params.method}]: ${url}`);
+      throw e;
+    }
   }
 
-  public runs(filter?: RunFilter & { limit?: number }): RunEntryIter {
+  private async processError(response: Response): Promise<Error> {
+    let errorResponse: ScApiErrorResponse | undefined;
+    const errorResponseText: string = await response
+      .text();
+    try {
+      errorResponse = JSON.parse(
+        errorResponseText,
+      ) as ScApiErrorResponse;
+    } catch {
+      // pass
+    }
+    // return new Error(JSON.stringify(errorResponse.errors))
+    const errMsg = errorResponse
+      ? (errorResponse.errors
+        ? JSON.stringify(errorResponse.errors)
+        : JSON.stringify(errorResponse))
+      : errorResponseText;
+    return new Error(
+      `${response.status}: ${response.statusText}: ${errMsg}`,
+    );
+  }
+
+  // Unwrap JSONAPI responses
+  private async processResponseJsonApi<T>(response: Response): Promise<T> {
+    if (response.ok) {
+      // const contentType = response.headers.get("Content-Type")?.toLowerCase();
+      // TODO: assert: (contentType === "application/json" || contentType === "application/vnd.api+json") {
+      const t = await response.json() as { data: T };
+      return t.data;
+    } else {
+      throw await this.processError(response);
+    }
+  }
+
+  private async processResponseBody(
+    response: Response,
+  ): Promise<ReadableStream<Uint8Array> | null> {
+    if (response.ok) {
+      return (await response.body) as ReadableStream<Uint8Array> | null;
+    } else {
+      throw await this.processError(response);
+    }
+  }
+
+  private async processResponseText(response: Response): Promise<string> {
+    if (response.ok) {
+      return await response.text();
+    } else {
+      throw await this.processError(response);
+    }
+  }
+
+  // TODO: could we have multiple organizations?
+  private async getAccountId(): Promise<string> {
+    const resp = await this.request("/me", { method: "GET" });
+    if (resp.ok) {
+      const user = (await this.processResponseJsonApi(resp)) as {
+        account_id: string;
+        username?: string;
+        id?: string;
+      };
+      return user.account_id;
+    } else {
+      throw await this.processError(resp);
+    }
+  }
+
+  public async runs(
+    filter?: RunFilter & { limit?: number },
+  ): Promise<RunEntryIter> {
+    if (!this.accountId) {
+      await this.init();
+    }
     return new RunEntryIter(this, filter);
+  }
+
+  public async latestRun(filter?: RunFilter): Promise<RunEntry | undefined> {
+    let latest: RunEntry | undefined;
+    for await (const run of await this.runs(filter)) {
+      if (
+        !latest || (latest.open_time && run.open_time &&
+          (latest.open_time < run.open_time))
+      ) {
+        latest = run;
+      }
+    }
+    return latest;
   }
 
   public async status(): Promise<PublicRunningStatus[]> {
     const path = `/orgs/${this.accountId}/running_status`;
-    const resp = await this.apiRequestRoot("GET", path);
-    if (resp.ok) {
-      return (await resp.json()).data;
-    } else {
-      throw new Error((await resp.json()).error)
-    }
+    const resp = await this.request(path);
+    return await this.processResponseJsonApi(resp);
   }
 
   public async run(runId: RunId): Promise<RunEntry> {
     const path = `/runs/${runId}`;
-    const resp = await this.apiRequestRoot("GET", path);
-    if (resp.ok) {
-      return (await resp.json()).data;
-    } else {
-      throw new Error((await resp.json()).error)
-    }
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
   }
 
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
-    const resp = await this.apiRequestRoot("GET", path);
-    if (resp.ok) {
-      return (await resp.json()).data;
-    } else {
-      throw new Error((await resp.json()).error)
-    }
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
   }
 
   public async confirmClosed(runId: RunId): Promise<boolean> {
@@ -157,103 +231,178 @@ export class ApiClient {
     return !run.open;
   }
 
-  public async err(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<string> {
-    const path = `/runs/${runId}/err?phase=${location}`;
-    const headers = new Headers();
-    if (opts?.range) {
-      headers.set("Range", opts?.range)
-    }
-    const resp = await this.apiRequestRoot("GET", path, undefined, {
-      headers
-    });
-    return resp.text();
+  public async snapshots(runId: RunId): Promise<Snapshot[]> {
+    const path = `/runs/${runId}/snapshots`;
+    const resp = await this.requestStorage(path);
+    return resp.json();
   }
 
-  public async errBytes(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<Blob> {
-    const path = `/runs/${runId}/err?phase=${location}`;
-    const headers = new Headers();
-    if (opts?.range) {
-      headers.set("Range", opts?.range)
+  public async latestSnapshot(runId: RunId): Promise<Snapshot | undefined> {
+    const snapshots = await this.snapshots(runId);
+    let latest: Snapshot | undefined;
+    for (const snapshot of snapshots) {
+      if (!latest || latest.time < snapshot.time) {
+        latest = snapshot;
+      }
     }
-    const resp = await this.apiRequestRoot("GET", path, undefined, {
-      headers
-    });
-    return resp.blob();
+    return latest;
   }
 
-  public async input(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<string> {
-    const path = `/runs/${runId}/input?phase=${location}`;
+  public async snapshotContents(
+    runId: RunId,
+    snapshotId: string,
+  ): Promise<string[]> {
+    const path = `/runs/${runId}/snapshots/${snapshotId}/contents`;
+    const resp = await this.requestStorage(path);
+    return resp.json();
+  }
+
+  public async snapshotFile(
+    runId: RunId,
+    snapshotId: string,
+    p: string,
+  ): Promise<ReadableStream<Uint8Array> | null> {
+    const path = `/runs/${runId}/snapshots/${snapshotId}/contents/${p}`;
+    const resp = await this.requestStorage(path);
+    return this.processResponseBody(resp);
+  }
+
+  public async errText(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    opts?: { range?: string },
+  ): Promise<string> {
+    return (await this._err(runId, location, opts)).text();
+  }
+
+  public async err(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    opts?: { range?: string },
+  ): Promise<Blob> {
+    return (await this._err(runId, location, opts)).blob();
+  }
+  public async _err(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    opts?: { range?: string },
+  ): Promise<Response> {
+    return (await this._file(runId, location, "err", opts));
+  }
+
+  public async inputText(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    opts?: { range?: string },
+  ): Promise<string> {
+    return (await this._input(runId, location, opts)).text();
+  }
+
+  public async input(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    opts?: { range?: string },
+  ): Promise<Blob> {
+    return (await this._input(runId, location, opts)).blob();
+  }
+  public async _input(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    opts?: { range?: string },
+  ): Promise<Response> {
+    return (await this._file(runId, location, "input", opts));
+  }
+
+  public async _file(
+    runId: RunId,
+    location: Phase.Storage | Phase.Running,
+    file: string,
+    opts?: { range?: string },
+  ): Promise<Response> {
+    const path = `/runs/${runId}/${file}?phase=${location}`;
     const headers = new Headers();
     if (opts?.range) {
-      headers.set("Range", opts?.range)
+      headers.set("Range", opts?.range);
     }
-    const resp = await this.apiRequestRoot("GET", path, undefined, {
-      headers
+    const resp = await this.request(path, {
+      headers,
     });
-    return resp.text();
+    return resp;
   }
 
   public async zip(runId: RunId): Promise<ReadableStream<Uint8Array> | null> {
     const path = `/runs/${runId}/zip`;
-    const resp = await this.apiRequestRoot("GET", path);
-    return resp.body;
+    const resp = await this.requestStorage(path);
+    return this.processResponseBody(resp);
   }
 
-
-  public async data(runId: string, location: Phase, csvtype: string, value: string): Promise<DataVector<number, number>> {
-    const path = `/runs/${runId}/data`;
-    const resp = await this.apiRequestRoot("GET", path, undefined, undefined, {
+  public async data(
+    runId: string,
+    location: Phase,
+    csvtype: string,
+    value: string,
+  ): Promise<DataVector<number, number>> {
+    const queryParams = new URLSearchParams({
       phase: location,
       csvtype,
-      value
+      value,
     });
-    const r = await resp.json();
-    return r.data;
+    const path = `/runs/${runId}/data${
+      queryParams.size > 0 ? `?${queryParams.toString()}` : ""
+    }`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
   }
 
-
-  public async runData(runId: string): Promise<RunData> {
-    const path = `/runs/${runId}/data/run`;
-    const resp = await this.apiRequestRoot("GET", path);
-    const r = await resp.json();
-    return r.data;
+  public async runData(runId: string, location: Phase): Promise<RunData> {
+    const path = `/runs/${runId}/data/run?phase=${location}`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
   }
 
-  public async newRun(startParams: SubmitStartParams, input: ReadableStream<Uint8Array> | string): Promise<RunEntry> {
+  public async newRun(
+    startParams: SubmitStartParams,
+    input: BodyInit,
+  ): Promise<RunEntry> {
     if (!startParams.chid || startParams.chid.length === 0) {
       throw new Error("no CHID provided");
     }
-    const path = `/orgs/${this.accountId}/runs`;
-    const instanceType = typeof startParams.instance_type === "number" ? coresToInstance(startParams.instance_type) : startParams.instance_type;
+    const instanceType = typeof startParams.instance_type === "number"
+      ? coresToInstance(startParams.instance_type)
+      : startParams.instance_type;
     const params: Record<string, string> = {
       chid: startParams.chid,
       fds_version: startParams.fds_version,
-      instance_type: instanceType
-    }
+      instance_type: instanceType,
+    };
     if (startParams.project) {
       params.project = startParams.project;
     }
+    params.apply_mpi_transform = true.toString();
+    const queryParams = new URLSearchParams(params);
+    const path = `/orgs/${this.accountId}/runs${
+      queryParams.size > 0 ? `?${queryParams.toString()}` : ""
+    }`;
     try {
       // Post the submission info.
-      const resp = await this.apiRequestRoot("POST", path, input, {
+      const resp = await this.request(path, {
         headers: new Headers({
           // TODO: this is not actually used currently
           "Idempotency-Key": uuid.v4(),
-          "Content-Type": "application/octet-stream"
-        })
-      }, params);
-      if (!resp.ok) {
-        if (resp.status === 409) {
-          // There was a conflict, this means either it failed due to the
-          // idempotency key or there is already an open model.
-          // const result = { run_id: await resp.text(), existing: true };
-          // return result;
-          throw new Error(await resp.text())
-        } else {
-          throw new Error(await resp.text())
-        }
+          "Content-Type": "application/octet-stream",
+        }),
+        body: input,
+        method: "POST",
+      });
+      if (!resp.ok && resp.status === 409) {
+        // There was a conflict, this means either it failed due to the
+        // idempotency key or there is already an open model. Not sure we
+        // particularly need to special-case this
+        const err: any = await resp.json();
+        throw new Error(err);
+      } else {
+        return this.processResponseJsonApi(resp);
       }
-      return (await resp.json()).data;
     } catch (err) {
       throw err;
     }
@@ -261,14 +410,30 @@ export class ApiClient {
 
   public async load(): Promise<CurrentUsage> {
     const path = `/orgs/${this.accountId}/load`;
-    const resp = await this.apiRequestRoot("GET", path);
-    return (await resp.json()).data;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  public async outstanding(accountIdOverride?: string): Promise<RunBilling[]> {
+    const accountId = accountIdOverride ?? this.accountId;
+    const path = `/orgs/${accountId}/billing/outstanding`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  public async outstandingTotal(): Promise<
+    { currency: string; total: number }
+  > {
+    const path = `/orgs/${this.accountId}/billing/outstanding/total`;
+    const resp = await this.request(path);
+    const total = (await this.processResponseJsonApi(resp)) as [string, number];
+    return { currency: total[0].toUpperCase(), total: total[1] };
   }
 
   public async me(): Promise<User> {
     const path = "/me";
-    const resp = await this.apiRequestRoot("GET", path);
-    return (await resp.json()).data;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
   }
 
   public org(): Promise<UserOrgInfo | undefined> {
@@ -281,12 +446,12 @@ export class ApiClient {
     return readableStreamFromAsyncIterator(follower[Symbol.asyncIterator]());
   }
   async stop(runId: string) {
-    const result = await this.apiRequestRoot("PUT", `/runs/${runId}/stop`);
-    return result.text();
+    const resp = await this.request(`/runs/${runId}/stop`, { method: "PUT" });
+    return this.processResponseText(resp);
   }
   async kill(runId: string) {
-    const result = await this.apiRequestRoot("PUT", `/runs/${runId}/kill`);
-    return result.text();
+    const resp = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
+    return this.processResponseText(resp);
   }
 }
 
@@ -303,7 +468,9 @@ class Follower implements AsyncIterable<Uint8Array> {
       this.closed = !run.open;
       // TODO: the server should be able to handle this element of phase
       const phase = closed ? Phase.Storage : Phase.Running;
-      const s = await this.client.errBytes(this.runId, phase, { range: `bytes=${this.nRead}-` });
+      const s = await this.client.err(this.runId, phase, {
+        range: `bytes=${this.nRead}-`,
+      });
       if (!s) break;
       if (s.slice(this.nRead).size) {
         yield new Uint8Array(await s.slice(this.nRead).arrayBuffer());
@@ -313,27 +480,28 @@ class Follower implements AsyncIterable<Uint8Array> {
   }
 }
 
-
-
 export interface PagedResponse<T> {
-  data: T[],
+  data: T[];
   links?: {
-    next?: string
-  }
+    next?: string;
+  };
 }
 
 // TODO: add support for more filter options
 export class RunEntryIter implements AsyncIterable<RunEntry> {
   private nextUrl?: string;
-  constructor(private client: ApiClient, filter?: RunFilter & { limit?: number }) {
+  constructor(
+    private client: ApiClient,
+    filter?: RunFilter & { limit?: number },
+  ) {
     const params = new URLSearchParams();
-    if (filter?.updatedSince) {
+    if (filter?.updatedSince != undefined) {
       params.set("from_time", filter?.updatedSince.toString());
     }
     if (filter?.chid) {
       params.set("chid", filter?.chid);
     }
-    if (filter?.limit) {
+    if (filter?.limit != undefined) {
       params.set("limit", filter?.limit.toString());
     }
     if (params.size > 0) {
@@ -341,15 +509,14 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
     } else {
       this.nextUrl = `/orgs/${this.client.accountId}/runs`;
     }
-
   }
   async *[Symbol.asyncIterator](): AsyncIterableIterator<RunEntry> {
     while (1) {
       if (this.nextUrl) {
-        const qs: Record<string, string> = {};
-        const resp = await this.client.apiRequestRoot("GET", this.nextUrl, undefined, undefined, qs);
+        const resp = await this.client.request(this.nextUrl);
         if (resp.ok) {
-          const result: PagedResponse<RunEntry> = await resp.json();
+          const result: PagedResponse<RunEntry> = await resp
+            .json() as PagedResponse<RunEntry>;
           for (const r of result.data) {
             yield r;
           }
@@ -359,8 +526,8 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
             break;
           }
         } else {
-          throw new Error(await resp.json());
-
+          const err: any = await resp.json();
+          throw new Error(err);
         }
       }
     }
@@ -368,15 +535,15 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
 }
 
 export interface SubmitStartParams {
-  project?: string,
-  chid: string,
-  fds_version: string,
-  instance_type: NCores | InstanceType,
+  project?: string;
+  chid: string;
+  fds_version: string;
+  instance_type: NCores | InstanceType;
 }
 
 export interface UploadProgressResult {
-  id: string,
-  status: UploadStatus,
+  id: string;
+  status: UploadStatus;
 }
 
 export enum UploadStatus {
@@ -390,9 +557,18 @@ export function toTable(runs: PublicRunningStatus[]) {
 }
 
 export function toTableRun(run: PublicRunningStatus) {
-  const runRate = run.run_rate !== undefined ? `${(run.run_rate * 60 * 60 * 24).toFixed(2)} s/day` : "-";
-  const cpu = run.cpu?.Value !== undefined && run.cpu_max?.Value !== undefined ? `${(run.cpu.Value).toFixed(0)}/${(run.cpu_max.Value).toFixed(0)}%` : "-";
-  const memory = run.memory?.Value !== undefined && run.memory_max?.Value !== undefined ? `${(run.memory.Value / 1024 / 1024 / 1024).toFixed(2)}/${(run.memory_max.Value / 1024 / 1024 / 1024).toFixed(2)} GiB` : "-";
+  const runRate = run.run_rate !== undefined
+    ? `${(run.run_rate * 60 * 60 * 24).toFixed(2)} s/day`
+    : "-";
+  const cpu = run.cpu?.Value !== undefined && run.cpu_max?.Value !== undefined
+    ? `${run.cpu.Value.toFixed(0)}/${run.cpu_max.Value.toFixed(0)}%`
+    : "-";
+  const memory =
+    run.memory?.Value !== undefined && run.memory_max?.Value !== undefined
+      ? `${(run.memory.Value / 1024 / 1024 / 1024).toFixed(2)}/${
+        (run.memory_max.Value / 1024 / 1024 / 1024).toFixed(2)
+      } GiB`
+      : "-";
   return {
     run_id: run.run_id,
     account_id: run.account_id,
@@ -400,15 +576,18 @@ export function toTableRun(run: PublicRunningStatus) {
     cpu,
     memory,
     runRate,
-  }
+  };
 }
 
 // TODO: this is a polyfill and should be removed when possible.
-function readableStreamFromAsyncIterator<T>(iterator: AsyncIterableIterator<T>,): ReadableStream<T> {
+function readableStreamFromAsyncIterator<T>(
+  iterator: AsyncIterableIterator<T>,
+): ReadableStream<T> {
   return new ReadableStream({
     async pull(controller) {
       const { value, done } = await iterator.next();
-      if (done) { controller.close(); } else { controller.enqueue(value); }
+      if (done) controller.close();
+      else controller.enqueue(value);
     },
   });
 }

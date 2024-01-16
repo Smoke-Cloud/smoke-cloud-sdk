@@ -1,6 +1,3 @@
-import { CredentialSet } from "./credentials.ts";
-
-export type GenericLoginResult = LoginSuccess<CredentialSet> | LoginFailure;
 export type LoginData = LoginDataMs | LoginDataKeys | LoginDataPassword;
 export type LoginResult<T extends LoginData> = LoginSuccess<T> | LoginFailure;
 export interface LoginSuccess<T> {
@@ -34,6 +31,13 @@ export interface CurrentUsage {
   used_cores: number;
   reserved_cores: number;
 }
+
+export interface Snapshot {
+  id: string;
+  time: string;
+  size: number;
+}
+
 export interface TokenResponse {
   access_token: string;
   id_token: string;
@@ -42,7 +46,6 @@ export interface TokenResponse {
   expires_in: number;
   scope: string;
 }
-
 
 export interface ScError {
   message: string;
@@ -54,30 +57,30 @@ export type Chid = string;
 export type AccountId = string;
 
 export interface PublicRunningStatus {
-  run_id: RunId,
-  account_id: AccountId,
-  chid: Chid,
-  progress?: RawProgress,
+  run_id: RunId;
+  account_id: AccountId;
+  chid: Chid;
+  progress?: RawProgress;
   cpu?: {
-    Value?: number
-  },
+    Value?: number;
+  };
   cpu_max?: {
-    Value?: number
-  },
+    Value?: number;
+  };
   memory?: {
-    Value?: number
-  },
+    Value?: number;
+  };
   memory_max?: {
-    Value?: number
-  },
+    Value?: number;
+  };
 
   /** Number of seconds simulated per second */
-  run_rate?: number,
+  run_rate?: number;
 }
 
 export interface RunEntry {
   run_id: RunId;
-  sim_id: { account_id: AccountId, chid: string };
+  sim_id: { account_id: AccountId; chid: string };
   open_time?: string;
   update_time?: string;
   username?: string;
@@ -90,27 +93,45 @@ export interface RunEntry {
   no_archive: boolean;
 }
 
+export interface RunBilling {
+  account_id: string;
+  run_id: string;
+  project?: string;
+  user?: string;
+  //  instance_type: smoke_cloud_core::InstanceType,
+  duration: {
+    secs: number;
+    nanos: number;
+  };
+  cost: [string, number];
+}
+
 export interface ProgressInfo {
   running: PresenceProgress;
   stored: PresenceProgress;
 }
 
-export type PresenceProgress = PresenceProgressFull | PresenceProgressEmpty | PresenceProgressNone;
+export type PresenceProgress =
+  | PresenceProgressFull
+  | PresenceProgressEmpty
+  | PresenceProgressNone;
 
-export function toSimpleProgress(progress: PresenceProgress): { current: number, total: number } | undefined {
+export function toSimpleProgress(
+  progress: PresenceProgress,
+): { current: number; total: number } | undefined {
   if (progress.present && progress.sim && progress.wall) {
     return { current: progress.sim.last_time, total: progress.sim.end_time };
   }
 }
 
-export type PresenceProgressFull = RawProgress & { present: true }
+export type PresenceProgressFull = RawProgress & { present: true };
 
 export interface RawProgress {
-  sim: { start_time: number, end_time: number, last_time: number }
+  sim: { start_time: number; end_time: number; last_time: number };
   wall: {
-    start_time: string,
-    last_time: string
-  }
+    start_time: string;
+    last_time: string;
+  };
 }
 
 export interface PresenceProgressEmpty {
@@ -164,7 +185,6 @@ export function coresToInstance(nCores: NCores): InstanceType {
       return InstanceType.Cores32;
   }
 }
-
 
 export enum Phase {
   Staging = "staging",

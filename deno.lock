@@ -2,15 +2,23 @@
   "version": "3",
   "packages": {
     "specifiers": {
+      "npm:@azure/msal-browser": "npm:@azure/msal-browser@3.7.0",
       "npm:@azure/msal-node@2.6.1": "npm:@azure/msal-node@2.6.1",
       "npm:@microsoft/microsoft-graph-client@3.0.7": "npm:@microsoft/microsoft-graph-client@3.0.7",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:crypto-js": "npm:crypto-js@4.2.0",
       "npm:crypto-js@4.2.0": "npm:crypto-js@4.2.0",
       "npm:jose@5.2.0": "npm:jose@5.2.0",
+      "npm:node-fetch": "npm:node-fetch@3.3.2",
       "npm:uuid@9.0.1": "npm:uuid@9.0.1"
     },
     "npm": {
+      "@azure/msal-browser@3.7.0": {
+        "integrity": "sha512-ktDB/Gf7UDgYBJOnoIlh70lxIo4e1/D2UgHuayB4RntN1IlusfTtIVH3k8NpJMdl+38tfTXIaUoR+qlr5voZEg==",
+        "dependencies": {
+          "@azure/msal-common": "@azure/msal-common@14.6.0"
+        }
+      },
       "@azure/msal-common@14.6.0": {
         "integrity": "sha512-AGusT/JvxdzJIYi5u0n97cmhd3pUT6UuI6rEkT5iDeT2FGcV0/EB8pk+dy6GLPpYg9vhDCuyoYrEZGd+2UeCCQ==",
         "dependencies": {}
@@ -48,10 +56,27 @@
         "integrity": "sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==",
         "dependencies": {}
       },
+      "data-uri-to-buffer@4.0.1": {
+        "integrity": "sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==",
+        "dependencies": {}
+      },
       "ecdsa-sig-formatter@1.0.11": {
         "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==",
         "dependencies": {
           "safe-buffer": "safe-buffer@5.2.1"
+        }
+      },
+      "fetch-blob@3.2.0": {
+        "integrity": "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==",
+        "dependencies": {
+          "node-domexception": "node-domexception@1.0.0",
+          "web-streams-polyfill": "web-streams-polyfill@3.3.2"
+        }
+      },
+      "formdata-polyfill@4.0.10": {
+        "integrity": "sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==",
+        "dependencies": {
+          "fetch-blob": "fetch-blob@3.2.0"
         }
       },
       "jose@5.2.0": {
@@ -126,6 +151,18 @@
         "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
         "dependencies": {}
       },
+      "node-domexception@1.0.0": {
+        "integrity": "sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==",
+        "dependencies": {}
+      },
+      "node-fetch@3.3.2": {
+        "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==",
+        "dependencies": {
+          "data-uri-to-buffer": "data-uri-to-buffer@4.0.1",
+          "fetch-blob": "fetch-blob@3.2.0",
+          "formdata-polyfill": "formdata-polyfill@4.0.10"
+        }
+      },
       "regenerator-runtime@0.14.1": {
         "integrity": "sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==",
         "dependencies": {}
@@ -152,11 +189,19 @@
         "integrity": "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==",
         "dependencies": {}
       },
+      "web-streams-polyfill@3.3.2": {
+        "integrity": "sha512-3pRGuxRF5gpuZc0W+EpwQRmCD7gRqcDOMt688KmdlDAgAyaB1XlN0zq2njfDNm44XVdIouE7pZ6GzbdyH47uIQ==",
+        "dependencies": {}
+      },
       "yallist@4.0.0": {
         "integrity": "sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==",
         "dependencies": {}
       }
     }
+  },
+  "redirects": {
+    "https://deno.land/x/emit/mod.ts": "https://deno.land/x/emit@0.33.0/mod.ts",
+    "https://esm.sh/@azure/msal-browser": "https://esm.sh/@azure/msal-browser@3.7.0"
   },
   "remote": {
     "https://deno.land/std@0.140.0/_util/assert.ts": "e94f2eb37cebd7f199952e242c77654e43333c1ac4c5c700e929ea3aa5489f74",
@@ -195,11 +240,37 @@
     "https://deno.land/std@0.181.0/path/posix.ts": "8b7c67ac338714b30c816079303d0285dd24af6b284f7ad63da5b27372a2c94d",
     "https://deno.land/std@0.181.0/path/separator.ts": "0fb679739d0d1d7bf45b68dacfb4ec7563597a902edbaf3c59b50d5bcadd93b1",
     "https://deno.land/std@0.181.0/path/win32.ts": "d186344e5583bcbf8b18af416d13d82b35a317116e6460a5a3953508c3de5bba",
+    "https://deno.land/std@0.186.0/_util/asserts.ts": "178dfc49a464aee693a7e285567b3d0b555dc805ff490505a8aae34f9cfb1462",
+    "https://deno.land/std@0.186.0/_util/os.ts": "d932f56d41e4f6a6093d56044e29ce637f8dcc43c5a90af43504a889cf1775e3",
+    "https://deno.land/std@0.186.0/path/_constants.ts": "e49961f6f4f48039c0dfed3c3f93e963ca3d92791c9d478ac5b43183413136e0",
+    "https://deno.land/std@0.186.0/path/_interface.ts": "6471159dfbbc357e03882c2266d21ef9afdb1e4aa771b0545e90db58a0ba314b",
+    "https://deno.land/std@0.186.0/path/_util.ts": "d7abb1e0dea065f427b89156e28cdeb32b045870acdf865833ba808a73b576d0",
+    "https://deno.land/std@0.186.0/path/common.ts": "ee7505ab01fd22de3963b64e46cff31f40de34f9f8de1fff6a1bd2fe79380000",
+    "https://deno.land/std@0.186.0/path/glob.ts": "d479e0a695621c94d3fd7fe7abd4f9499caf32a8de13f25073451c6ef420a4e1",
+    "https://deno.land/std@0.186.0/path/mod.ts": "ee161baec5ded6510ee1d1fb6a75a0f5e4b41f3f3301c92c716ecbdf7dae910d",
+    "https://deno.land/std@0.186.0/path/posix.ts": "8b7c67ac338714b30c816079303d0285dd24af6b284f7ad63da5b27372a2c94d",
+    "https://deno.land/std@0.186.0/path/separator.ts": "0fb679739d0d1d7bf45b68dacfb4ec7563597a902edbaf3c59b50d5bcadd93b1",
+    "https://deno.land/std@0.186.0/path/win32.ts": "d186344e5583bcbf8b18af416d13d82b35a317116e6460a5a3953508c3de5bba",
     "https://deno.land/std@0.212.0/dotenv/mod.ts": "46cc7a78cf3f7ba533c8c9b90407a365f925be332ebdc867a1f502614e3d8523",
     "https://deno.land/std@0.212.0/dotenv/parse.ts": "55d5d1a5ba76c1324e6dc2f2f7917f03c47e5da5c2c55af11fd0fe2d6a3d3a2e",
     "https://deno.land/std@0.212.0/dotenv/stringify.ts": "0047ad7068289735d08964046aea267a750c141b494ca0e38831b89be6c020c2",
+    "https://deno.land/std@0.213.0/dotenv/mod.ts": "46cc7a78cf3f7ba533c8c9b90407a365f925be332ebdc867a1f502614e3d8523",
+    "https://deno.land/std@0.213.0/dotenv/parse.ts": "55d5d1a5ba76c1324e6dc2f2f7917f03c47e5da5c2c55af11fd0fe2d6a3d3a2e",
+    "https://deno.land/std@0.213.0/dotenv/stringify.ts": "0047ad7068289735d08964046aea267a750c141b494ca0e38831b89be6c020c2",
     "https://deno.land/x/code_block_writer@12.0.0/mod.ts": "2c3448060e47c9d08604c8f40dee34343f553f33edcdfebbf648442be33205e5",
     "https://deno.land/x/code_block_writer@12.0.0/utils/string_utils.ts": "60cb4ec8bd335bf241ef785ccec51e809d576ff8e8d29da43d2273b69ce2a6ff",
+    "https://deno.land/x/deno_cache@0.5.2/auth_tokens.ts": "5d1d56474c54a9d152e44d43ea17c2e6a398dd1e9682c69811a313567c01ee1e",
+    "https://deno.land/x/deno_cache@0.5.2/cache.ts": "92ce8511e1e5c00fdf53a41619aa77d632ea8e0fc711324322e4d5ebf8133911",
+    "https://deno.land/x/deno_cache@0.5.2/deno_dir.ts": "1ea355b8ba11c630d076b222b197cfc937dd81e5a4a260938997da99e8ff93a0",
+    "https://deno.land/x/deno_cache@0.5.2/deps.ts": "26a75905652510b76e54b6d5ef3cf824d1062031e00782efcd768978419224e7",
+    "https://deno.land/x/deno_cache@0.5.2/dirs.ts": "009c6f54e0b610914d6ce9f72f6f6ccfffd2d47a79a19061e0a9eb4253836069",
+    "https://deno.land/x/deno_cache@0.5.2/disk_cache.ts": "66a1e604a8d564b6dd0500326cac33d08b561d331036bf7272def80f2f7952aa",
+    "https://deno.land/x/deno_cache@0.5.2/file_fetcher.ts": "89616c50b6df73fb04e73d0b7cd99e5f2ed7967386913d65b9e8baa4238501f7",
+    "https://deno.land/x/deno_cache@0.5.2/http_cache.ts": "407135eaf2802809ed373c230d57da7ef8dff923c4abf205410b9b99886491fd",
+    "https://deno.land/x/deno_cache@0.5.2/lib/deno_cache_dir.generated.js": "18b6526d0c50791a73dd0eb894e99de1ac05ee79dcbd53298ff5b5b6b0757fe6",
+    "https://deno.land/x/deno_cache@0.5.2/lib/snippets/deno_cache_dir-77bed54ace8005e0/fs.js": "cbe3a976ed63c72c7cb34ef845c27013033a3b11f9d8d3e2c4aa5dda2c0c7af6",
+    "https://deno.land/x/deno_cache@0.5.2/mod.ts": "0b4d071ad095128bdc2b1bc6e5d2095222dcbae08287261690ee9757e6300db6",
+    "https://deno.land/x/deno_cache@0.5.2/util.ts": "f3f5a0cfc60051f09162942fb0ee87a0e27b11a12aec4c22076e3006be4cc1e2",
     "https://deno.land/x/deno_cache@0.6.2/auth_tokens.ts": "5d1d56474c54a9d152e44d43ea17c2e6a398dd1e9682c69811a313567c01ee1e",
     "https://deno.land/x/deno_cache@0.6.2/cache.ts": "58b53c128b742757efcad10af9a3871f23b4e200674cb5b0ddf61164fb9b2fe7",
     "https://deno.land/x/deno_cache@0.6.2/deno_dir.ts": "1ea355b8ba11c630d076b222b197cfc937dd81e5a4a260938997da99e8ff93a0",
@@ -228,6 +299,9 @@
     "https://deno.land/x/dnt@0.39.0/lib/utils.ts": "224f15f33e7226a2fd991e438d0291d7ed8c7889807efa2e1ecb67d2d1db6720",
     "https://deno.land/x/dnt@0.39.0/mod.ts": "9df36a862161d9eb376472b699f6cb08ba0ad1704e0826fbe13be766bd3c01da",
     "https://deno.land/x/dnt@0.39.0/transform.ts": "f68743a14cf9bf53bfc9c81073871d69d447a7f9e3453e0447ca2fb78926bb1d",
+    "https://deno.land/x/emit@0.33.0/_utils.ts": "98412edc7aa29e77d592b54fbad00bdec1b05d0c25eb772a5f8edc9813e08d88",
+    "https://deno.land/x/emit@0.33.0/emit.generated.js": "e18a4c7c0dd34a74f008fa81fc64a5d26adba045fdce5acf6f7c0b1f15dfd277",
+    "https://deno.land/x/emit@0.33.0/mod.ts": "326c48e48f3f3c83c11b089aec803e6270bcd64493f250aeb56f46f6960a8458",
     "https://deno.land/x/ts_morph@20.0.0/bootstrap/mod.ts": "b53aad517f106c4079971fcd4a81ab79fadc40b50061a3ab2b741a09119d51e9",
     "https://deno.land/x/ts_morph@20.0.0/bootstrap/ts_morph_bootstrap.js": "6645ac03c5e6687dfa8c78109dc5df0250b811ecb3aea2d97c504c35e8401c06",
     "https://deno.land/x/ts_morph@20.0.0/common/DenoRuntime.ts": "6a7180f0c6e90dcf23ccffc86aa8271c20b1c4f34c570588d08a45880b7e172d",
@@ -235,6 +309,29 @@
     "https://deno.land/x/ts_morph@20.0.0/common/ts_morph_common.js": "2325f94f61dc5f3f98a1dab366dc93048d11b1433d718b10cfc6ee5a1cfebe8f",
     "https://deno.land/x/ts_morph@20.0.0/common/typescript.js": "b9edf0a451685d13e0467a7ed4351d112b74bd1e256b915a2b941054e31c1736",
     "https://deno.land/x/wasmbuild@0.15.1/cache.ts": "9d01b5cb24e7f2a942bbd8d14b093751fa690a6cde8e21709ddc97667e6669ed",
-    "https://deno.land/x/wasmbuild@0.15.1/loader.ts": "8c2fc10e21678e42f84c5135d8ab6ab7dc92424c3f05d2354896a29ccfd02a63"
+    "https://deno.land/x/wasmbuild@0.15.1/loader.ts": "8c2fc10e21678e42f84c5135d8ab6ab7dc92424c3f05d2354896a29ccfd02a63",
+    "https://esm.sh/@azure/msal-browser@3.7.0": "9d9bff834c58296c4cbb2f338189524a77fc2cf9a9669ae809c761e51be78af9",
+    "https://esm.sh/@microsoft/microsoft-graph-client@3.0.7": "d28f8d5f3277fe64b1be35879967736726d27c735870af1e7882defa5634826f",
+    "https://esm.sh/jose@5.2.0": "71a4e11456b1ae054657d169047b948f3e08ffeab3882429cc329bdd4fa311af",
+    "https://esm.sh/uuid@9.0.1": "0177f1d65c9a552b6815721f427b3cf621c4fb96860fb9c63f34901c1c80ad58",
+    "https://esm.sh/v135/@azure/msal-browser@3.7.0/denonext/dist/controllers/NestedAppAuthController.js": "dd23a69a411e41963f9cf98a681c93e1b86737d0e63057ca2b0acd971f1a1ed5",
+    "https://esm.sh/v135/@azure/msal-browser@3.7.0/denonext/dist/controllers/StandardController.js": "ce199c56fcfaaebad803d1d4def7c35e144f0a9f704198e1110924b2408dc31c",
+    "https://esm.sh/v135/@azure/msal-browser@3.7.0/denonext/dist/telemetry/BrowserPerformanceMeasurement.js": "d45fb6b4026d9d7944c722081eb044a4eb3bd645672e1aae1efa5c918aec71f1",
+    "https://esm.sh/v135/@azure/msal-browser@3.7.0/denonext/msal-browser.mjs": "0db902698be7545099cf54cb47f5cbdead85c0f1e9e83d2c7090989a3eb2f018",
+    "https://esm.sh/v135/@azure/msal-common@14.6.0/denonext/msal-common.mjs": "9eed3f0875fff3e718e4199c97b8aeb67e66c3b9e6fdf0a7febb5a14561b8700",
+    "https://esm.sh/v135/@microsoft/microsoft-graph-client@3.0.7/denonext/microsoft-graph-client.mjs": "d4c482d6deb3e6e20e2dffe632d07a51b83d149de6878c2f959e8d0330509a92",
+    "https://esm.sh/v135/jose@5.2.0/denonext/base64url.js": "901938b4293b79b3991e45018309116a83200eab8cc33df4480cc0d03e8f1d7a",
+    "https://esm.sh/v135/jose@5.2.0/denonext/errors.js": "0276c55f000a9c767907fefd7b932c02c406fdb051c9459ccf6b3088d410f5b5",
+    "https://esm.sh/v135/jose@5.2.0/denonext/jose.mjs": "30649d384cd494bce9da566d00986d553ac30ae422acfe15f4edf3b75864e890",
+    "https://esm.sh/v135/tslib@2.6.2/denonext/tslib.mjs": "29782bcd3139f77ec063dc5a9385c0fff4a8d0a23b6765c73d9edeb169a04bf1",
+    "https://esm.sh/v135/uuid@9.0.1/denonext/uuid.mjs": "7d7d3aa57fa136e2540886654c416d9da10d8cfebe408bae47fd47070f0bfb2a"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@azure/msal-browser",
+      "npm:@microsoft/microsoft-graph-client@3.0.7",
+      "npm:jose@5.2.0",
+      "npm:uuid@9.0.1"
+    ]
   }
 }

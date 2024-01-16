@@ -7,6 +7,8 @@ await build({
   outDir: "./npm",
   shims: {
     deno: true,
+    // undici: true,
+    // blob: true,
   },
   importMap: "deno.json",
   package: {
@@ -23,7 +25,10 @@ await build({
     },
     devDependencies: {
       "@types/uuid": "^9.0.1",
-      "@types/crypto-js": "^4.2.0"
+      "@types/crypto-js": "^4.2.0",
+    },
+    engines: {
+      node: ">=18.16.0",
     },
   },
   postBuild() {
@@ -33,5 +38,6 @@ await build({
   },
   compilerOptions: {
     lib: ["ES2023", "DOM"],
+    target: "ES2022",
   },
 });
