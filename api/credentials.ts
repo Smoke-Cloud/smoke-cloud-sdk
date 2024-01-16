@@ -1,8 +1,6 @@
 import * as jose from "jose";
 import { LoginData } from "./coreTypes.ts";
-import { ApiClient } from "./api.ts";
 import { Client, AuthProviderCallback as MsalGraphAuthProviderCallback } from "@microsoft/microsoft-graph-client";
-import { authFromLoginData } from "./authProviders/mod.ts";
 
 export interface UserOrgInfo {
   user?: {
@@ -139,18 +137,18 @@ export class CredentialSet {
     localStorage.setItem(`${this.id}.userOrgInfo`, JSON.stringify(org));
   }
 
-  async userOrgInfo(): Promise<UserOrgInfo | undefined> {
-    if (!this.#userOrgInfo) {
-      await this.refreshUserOrgInfo();
-    }
-    return this.#userOrgInfo;
-  }
-  async refreshUserOrgInfo() {
-    // TODO: there is a risk of introducing an infinite loop here
-    const api = new ApiClient(authFromLoginData(this.#credentials), this.accountId);
-    this.#userOrgInfo = await api.org() ?? {};
-    this.cachedUserOrgInfo = this.#userOrgInfo;
-  }
+  // async userOrgInfo(): Promise<UserOrgInfo | undefined> {
+  //   if (!this.#userOrgInfo) {
+  //     await this.refreshUserOrgInfo();
+  //   }
+  //   return this.#userOrgInfo;
+  // }
+  // async refreshUserOrgInfo() {
+  //   // TODO: there is a risk of introducing an infinite loop here
+  //   const api = new ApiClient(authFromLoginData(this.#credentials), this.accountId);
+  //   this.#userOrgInfo = await api.org() ?? {};
+  //   this.cachedUserOrgInfo = this.#userOrgInfo;
+  // }
 }
 
 

@@ -2,6 +2,7 @@
   "version": "3",
   "packages": {
     "specifiers": {
+      "npm:@azure/msal-browser": "npm:@azure/msal-browser@3.7.0",
       "npm:@azure/msal-node@2.6.1": "npm:@azure/msal-node@2.6.1",
       "npm:@microsoft/microsoft-graph-client@3.0.7": "npm:@microsoft/microsoft-graph-client@3.0.7",
       "npm:@types/node": "npm:@types/node@18.16.19",
@@ -11,6 +12,12 @@
       "npm:uuid@9.0.1": "npm:uuid@9.0.1"
     },
     "npm": {
+      "@azure/msal-browser@3.7.0": {
+        "integrity": "sha512-ktDB/Gf7UDgYBJOnoIlh70lxIo4e1/D2UgHuayB4RntN1IlusfTtIVH3k8NpJMdl+38tfTXIaUoR+qlr5voZEg==",
+        "dependencies": {
+          "@azure/msal-common": "@azure/msal-common@14.6.0"
+        }
+      },
       "@azure/msal-common@14.6.0": {
         "integrity": "sha512-AGusT/JvxdzJIYi5u0n97cmhd3pUT6UuI6rEkT5iDeT2FGcV0/EB8pk+dy6GLPpYg9vhDCuyoYrEZGd+2UeCCQ==",
         "dependencies": {}

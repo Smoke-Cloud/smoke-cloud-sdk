@@ -1,21 +1,6 @@
-import { Configuration, LogLevel } from "@azure/msal-node";
-// import {
-//   DataProtectionScope,
-//   FilePersistenceWithDataProtection,
-//   // NativeBrokerPlugin,
-//   PersistenceCachePlugin,
-// } from "@azure/msal-node-extensions";
+import { Configuration, LogLevel } from "@azure/msal-browser";
 
-export async function createConfig(clientId: string): Promise<Configuration> {
-  // const cachePath = "./auth_cache";
-  // const dataProtectionScope = DataProtectionScope.CurrentUser;
-  // const optionalEntropy = ""; //specifies password or other additional entropy used to encrypt the data.
-  // const windowsPersistence = await FilePersistenceWithDataProtection.create(
-  //   cachePath,
-  //   dataProtectionScope,
-  //   optionalEntropy,
-  // );
-
+export function createConfig(clientId: string): Promise<Configuration> {
   if (!clientId) {
     throw new Error("no client id");
   }
@@ -24,12 +9,6 @@ export async function createConfig(clientId: string): Promise<Configuration> {
       clientId,
       authority: "https://login.microsoftonline.com/common",
     },
-    // cache: {
-    //   cachePlugin: new PersistenceCachePlugin(windowsPersistence),
-    // },
-    // broker: {
-    //     nativeBrokerPlugin: new NativeBrokerPlugin()
-    // },
     system: {
       loggerOptions: {
         loggerCallback(_loglevel: LogLevel, message: string, _containsPii: boolean) {
@@ -40,5 +19,5 @@ export async function createConfig(clientId: string): Promise<Configuration> {
       },
     },
   };
-  return msalConfig;
+  return Promise.resolve(msalConfig);
 }

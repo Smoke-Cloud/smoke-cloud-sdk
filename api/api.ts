@@ -40,9 +40,6 @@ export interface RunFilter {
 export class ApiClient {
   private stage = "v3";
   public api_endpoint = new URL("https://api.smokecloud.io");
-  #passwordToken?: string;
-  // TODO: passing in the refreshToken callback is a bit hacky, should try and
-  // remove it.
   constructor(private authProvider: AuthProvider, public accountId: string, options?: {
     stage?: string,
     api_endpoint?: string
@@ -55,30 +52,20 @@ export class ApiClient {
     }
   }
 
-  private async request(method: string, path: string, useAccountId: boolean, body?: ReadableStream<Uint8Array> | string, opts?: any, queryParams?: Record<string, string>) {
+  private async request(method: string, path: string, useAccountId: boolean, body?: ReadableStream<Uint8Array> | string, opts?: RequestInit, queryParams?: Record<string, string>) {
     if (path.startsWith(`${this.stage}`)) {
       path.slice(this.stage.length)
     }
     const token = await this.authProvider.acquireToken();
     const p = opts ? opts : {};
     p.method = method;
-    const headers: Headers = new Headers();
+    const headers: Headers = new Headers(opts?.headers);
     headers.append("Content-Type", "application/json");
     headers.append("Access-Control-Request-Headers", "Location");
     headers.append(
       "Authorization",
       `Bearer ${token}`,
     );
-    if (p.headers) {
-      if (typeof p.headers.entries === "function") {
-        const iter = p.headers.entries();
-        for (const [k, v] of iter) {
-          if (typeof k === "string" && typeof v === "string") {
-            headers.append(k, v);
-          }
-        }
-      }
-    }
     p.headers = headers;
     if (body) {
       p.body = body;
@@ -100,8 +87,6 @@ export class ApiClient {
     }
     const request = new Request(`${url}`, p);
     try {
-      // TODO: this has issues with redirects as the authentication header is
-      // lost
       const response = await fetch(request);
       return response;
     } catch (e) {
@@ -110,7 +95,7 @@ export class ApiClient {
     }
   }
 
-  async apiRequestRoot(method: string, path: string, body?: ReadableStream<Uint8Array> | string, opts?: any, queryParams?: Record<string, string>) {
+  async apiRequestRoot(method: string, path: string, body?: ReadableStream<Uint8Array> | string, opts?: RequestInit, queryParams?: Record<string, string>) {
     return await this.request(method, path, false, body, opts, queryParams);
   }
 
@@ -246,8 +231,6 @@ export class ApiClient {
         if (resp.status === 409) {
           // There was a conflict, this means either it failed due to the
           // idempotency key or there is already an open model.
-          // const result = { run_id: await resp.text(), existing: true };
-          // return result;
           throw new Error(await resp.text())
         } else {
           throw new Error(await resp.text())

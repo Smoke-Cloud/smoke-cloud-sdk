@@ -33,5 +33,6 @@ await build({
   },
   compilerOptions: {
     lib: ["ES2023", "DOM"],
+    target:"ES2022"
   },
 });
