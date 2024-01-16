@@ -1,4 +1,4 @@
-// import * as uuid from "uuid";
+import * as uuid from "uuid";
 import { type CurrentUsage, RunEntry, RunId, coresToInstance, NCores, InstanceType, Phase, ProgressInfo, PublicRunningStatus, User } from "./coreTypes.ts";
 import { UserOrgInfo } from "./credentials.ts";
 import { DataVector, RunData } from "./getS3CSVData.ts";
@@ -58,55 +58,35 @@ export class ApiClient {
     this.accountId = await this.getAccountId();
   }
 
-  private async request(method: string, path: string, useAccountId: boolean, body?: ReadableStream<Uint8Array> | string, opts?: RequestInit, queryParams?: Record<string, string>) {
-    if (path.startsWith(`${this.stage}`)) {
-      path.slice(this.stage.length)
-    }
+  async request(path: string, init?: RequestInit) {
     const token = await this.authProvider.acquireToken();
-    const p = opts ? opts : {};
-    p.method = method;
-    const headers: Headers = new Headers(opts?.headers);
+    const params = init ? init : {};
+    const headers: Headers = new Headers(init?.headers);
     headers.append("Content-Type", "application/json");
     headers.append("Access-Control-Request-Headers", "Location");
     headers.append(
       "Authorization",
       `Bearer ${token}`,
     );
-    p.headers = headers;
-    if (body) {
-      p.body = body;
-    }
+    params.headers = headers;
     if (path.length !== 0 && !path.startsWith("/")) {
       path = `/${path}`;
     }
     const url = new URL(`${this.api_endpoint}${path}`);
-    if (useAccountId) {
-      if (!this.accountId) {
-        this.accountId = await this.getAccountId();
-      }
-      url.pathname = `/${this.stage}/orgs/${this.accountId}${url.pathname}`;
-    } else {
-      url.pathname = `/${this.stage}${url.pathname}`;
-    }
-
-    if (queryParams) {
-      for (const k of Object.keys(queryParams)) {
-        url.searchParams.append(k, queryParams[k])
-      }
-    }
-    const request = new Request(`${url}`, p);
+    url.pathname = `/${this.stage}${url.pathname}`;
+    const request = new Request(`${url}`, params);
     try {
       const response = await fetch(request);
       return response;
     } catch (e) {
-      console.warn(`Failed: apiRequest[${method}]: ${url}`);
+      console.warn(`Failed: apiRequest[${params.method}]: ${url}`);
       throw e;
     }
   }
 
   // TODO: could we have multiple organizations?
   private async getAccountId(): Promise<string> {
-    const resp = await this.request("GET", "/me/account_id", false);
+    const resp = await this.request("/me/account_id", { method: "GET" });
     if (resp.ok) {
       const accountId = await resp.json();
       return accountId;
@@ -118,27 +98,24 @@ export class ApiClient {
     }
   }
 
-  async apiRequestRoot(method: string, path: string, body?: ReadableStream<Uint8Array> | string, opts?: RequestInit, queryParams?: Record<string, string>) {
-    return await this.request(method, path, false, body, opts, queryParams);
-  }
-
   public runs(filter?: RunFilter & { limit?: number }): RunEntryIter {
     return new RunEntryIter(this, filter);
   }
 
   public async status(): Promise<PublicRunningStatus[]> {
     const path = `/orgs/${this.accountId}/running_status`;
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     if (resp.ok) {
       return (await resp.json()).data;
     } else {
-      throw new Error((await resp.json()).error)
+      throw new Error((await resp.text()))
+      // throw new Error((await resp.json()).error)
     }
   }
 
   public async run(runId: RunId): Promise<RunEntry> {
     const path = `/runs/${runId}`;
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     if (resp.ok) {
       return (await resp.json()).data;
     } else {
@@ -148,7 +125,7 @@ export class ApiClient {
 
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     if (resp.ok) {
       return (await resp.json()).data;
     } else {
@@ -171,7 +148,7 @@ export class ApiClient {
     if (opts?.range) {
       headers.set("Range", opts?.range)
     }
-    const resp = await this.apiRequestRoot("GET", path, undefined, {
+    const resp = await this.request(path, {
       headers
     });
     return resp.text();
@@ -183,7 +160,7 @@ export class ApiClient {
     if (opts?.range) {
       headers.set("Range", opts?.range)
     }
-    const resp = await this.apiRequestRoot("GET", path, undefined, {
+    const resp = await this.request(path, {
       headers
     });
     return resp.blob();
@@ -195,7 +172,7 @@ export class ApiClient {
     if (opts?.range) {
       headers.set("Range", opts?.range)
     }
-    const resp = await this.apiRequestRoot("GET", path, undefined, {
+    const resp = await this.request(path, {
       headers
     });
     return resp.text();
@@ -203,18 +180,19 @@ export class ApiClient {
 
   public async zip(runId: RunId): Promise<ReadableStream<Uint8Array> | null> {
     const path = `/runs/${runId}/zip`;
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     return resp.body;
   }
 
 
   public async data(runId: string, location: Phase, csvtype: string, value: string): Promise<DataVector<number, number>> {
-    const path = `/runs/${runId}/data`;
-    const resp = await this.apiRequestRoot("GET", path, undefined, undefined, {
+    const queryParams = new URLSearchParams({
       phase: location,
       csvtype,
       value
     });
+    const path = `/runs/${runId}/data${queryParams.size > 0 ? `?${queryParams.toString()}` : ""}`;
+    const resp = await this.request(path);
     const r = await resp.json();
     return r.data;
   }
@@ -222,7 +200,7 @@ export class ApiClient {
 
   public async runData(runId: string): Promise<RunData> {
     const path = `/runs/${runId}/data/run`;
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     const r = await resp.json();
     return r.data;
   }
@@ -231,7 +209,6 @@ export class ApiClient {
     if (!startParams.chid || startParams.chid.length === 0) {
       throw new Error("no CHID provided");
     }
-    const path = `/orgs/${this.accountId}/runs`;
     const instanceType = typeof startParams.instance_type === "number" ? coresToInstance(startParams.instance_type) : startParams.instance_type;
     const params: Record<string, string> = {
       chid: startParams.chid,
@@ -241,22 +218,29 @@ export class ApiClient {
     if (startParams.project) {
       params.project = startParams.project;
     }
+    const queryParams = new URLSearchParams(params);
+    const path = `/orgs/${this.accountId}/runs${queryParams.size > 0 ? `?${queryParams.toString()}` : ""}`;
     try {
       // Post the submission info.
-      const resp = await this.apiRequestRoot("POST", path, input, {
+      const resp = await this.request(path, {
         headers: new Headers({
           // TODO: this is not actually used currently
-          // "Idempotency-Key": uuid.v4(),
+          "Idempotency-Key": uuid.v4(),
           "Content-Type": "application/octet-stream"
-        })
-      }, params);
+        }),
+        body: input,
+        method: "POST"
+      });
       if (!resp.ok) {
         if (resp.status === 409) {
           // There was a conflict, this means either it failed due to the
           // idempotency key or there is already an open model.
           throw new Error(await resp.json())
         } else {
-          throw new Error(await resp.json())
+          const errMsg = await resp.text();
+          console.error(errMsg);
+          throw new Error(errMsg)
+          // throw new Error(await resp.json())
         }
       }
       return (await resp.json()).data;
@@ -267,13 +251,13 @@ export class ApiClient {
 
   public async load(): Promise<CurrentUsage> {
     const path = `/orgs/${this.accountId}/load`;
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     return (await resp.json()).data;
   }
 
   public async me(): Promise<User> {
     const path = "/me";
-    const resp = await this.apiRequestRoot("GET", path);
+    const resp = await this.request(path);
     return (await resp.json()).data;
   }
 
@@ -287,11 +271,11 @@ export class ApiClient {
     return readableStreamFromAsyncIterator(follower[Symbol.asyncIterator]());
   }
   async stop(runId: string) {
-    const result = await this.apiRequestRoot("PUT", `/runs/${runId}/stop`);
+    const result = await this.request(`/runs/${runId}/stop`, { method: "PUT" });
     return result.text();
   }
   async kill(runId: string) {
-    const result = await this.apiRequestRoot("PUT", `/runs/${runId}/kill`);
+    const result = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
     return result.text();
   }
 }
@@ -352,8 +336,7 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
   async *[Symbol.asyncIterator](): AsyncIterableIterator<RunEntry> {
     while (1) {
       if (this.nextUrl) {
-        const qs: Record<string, string> = {};
-        const resp = await this.client.apiRequestRoot("GET", this.nextUrl, undefined, undefined, qs);
+        const resp = await this.client.request(this.nextUrl);
         if (resp.ok) {
           const result: PagedResponse<RunEntry> = await resp.json();
           for (const r of result.data) {
