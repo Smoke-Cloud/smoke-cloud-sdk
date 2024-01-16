@@ -29,7 +29,6 @@ export interface ScApiErrorObject {
     header?: string;
   };
   meta?: object;
-
 }
 
 export interface RunFilter {
@@ -40,15 +39,11 @@ export interface RunFilter {
 
 export class ApiClient {
   private stage = "v3";
-  public api_endpoint = new URL("https://api.smokecloud.io");
+  public api_endpoint = new URL("https://api.smokecloud.io/v3");
   public accountId?: string;
   constructor(private authProvider: AuthProvider, options?: {
-    stage?: string,
     api_endpoint?: string
   }) {
-    if (options?.stage) {
-      this.stage = options.stage;
-    }
     if (options?.api_endpoint) {
       this.api_endpoint = new URL(options.api_endpoint);
     }
@@ -73,7 +68,6 @@ export class ApiClient {
       path = `/${path}`;
     }
     const url = new URL(`${this.api_endpoint}${path}`);
-    url.pathname = `/${this.stage}${url.pathname}`;
     const request = new Request(`${url}`, params);
     try {
       const response = await fetch(request);
