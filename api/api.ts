@@ -38,7 +38,6 @@ export interface RunFilter {
 }
 
 export class ApiClient {
-  private stage = "v3";
   public api_endpoint = new URL("https://api.smokecloud.io/v3");
   public accountId?: string;
   constructor(private authProvider: AuthProvider, options?: {
@@ -50,10 +49,11 @@ export class ApiClient {
   }
 
   public async init() {
+    await this.authProvider.init();
     this.accountId = await this.getAccountId();
   }
 
-  async request(path: string, init?: RequestInit) {
+  async request(path: string, init?: RequestInit): Promise<Response> {
     const token = await this.authProvider.acquireToken();
     const params = init ? init : {};
     const headers: Headers = new Headers(init?.headers);
@@ -70,11 +70,43 @@ export class ApiClient {
     const url = new URL(`${this.api_endpoint}${path}`);
     const request = new Request(`${url}`, params);
     try {
-      const response = await fetch(request);
-      return response;
+      return await fetch(request);
     } catch (e) {
       console.warn(`Failed: apiRequest[${params.method}]: ${url}`);
       throw e;
+    }
+  }
+
+  private async processError(response: Response): Promise<Error> {
+    const errorResponse: ScApiErrorResponse = await response.json();
+    // return new Error(JSON.stringify(errorResponse.errors))
+    return new Error(`${response.status}: ${response.statusText}: ${JSON.stringify(errorResponse.errors)}`);
+  }
+
+  // Unwrap JSONAPI responses
+  private async processResponseJsonApi<T>(response: Response): Promise<T> {
+    if (response.ok) {
+      // const contentType = response.headers.get("Content-Type")?.toLowerCase();
+      // TODO: assert: (contentType === "application/json" || contentType === "application/vnd.api+json") {
+      return (await response.json()).data;
+    } else {
+      throw await this.processError(response);
+    }
+  }
+
+  private async processResponseBody(response: Response): Promise<ReadableStream<Uint8Array> | null> {
+    if (response.ok) {
+      return await response.body
+    } else {
+      throw await this.processError(response);
+    }
+  }
+
+  private async processResponseText(response: Response): Promise<string> {
+    if (response.ok) {
+      return await response.text();
+    } else {
+      throw await this.processError(response);
     }
   }
 
@@ -82,13 +114,10 @@ export class ApiClient {
   private async getAccountId(): Promise<string> {
     const resp = await this.request("/me/account_id", { method: "GET" });
     if (resp.ok) {
-      const accountId = await resp.json();
-      return accountId;
+      // TODO: this route still needs to be made compliant with JSONAPI
+      return (await resp.json());
     } else {
-      const errMsg = await resp.text();
-      console.error(errMsg);
-      throw new Error(errMsg);
-
+      throw await this.processError(resp);
     }
   }
 
@@ -99,32 +128,19 @@ export class ApiClient {
   public async status(): Promise<PublicRunningStatus[]> {
     const path = `/orgs/${this.accountId}/running_status`;
     const resp = await this.request(path);
-    if (resp.ok) {
-      return (await resp.json()).data;
-    } else {
-      throw new Error((await resp.text()))
-      // throw new Error((await resp.json()).error)
-    }
+    return await this.processResponseJsonApi(resp);
   }
 
   public async run(runId: RunId): Promise<RunEntry> {
     const path = `/runs/${runId}`;
     const resp = await this.request(path);
-    if (resp.ok) {
-      return (await resp.json()).data;
-    } else {
-      throw new Error((await resp.json()).error)
-    }
+    return this.processResponseJsonApi(resp);
   }
 
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
     const resp = await this.request(path);
-    if (resp.ok) {
-      return (await resp.json()).data;
-    } else {
-      throw new Error((await resp.json()).error)
-    }
+    return this.processResponseJsonApi(resp);
   }
 
   public async confirmClosed(runId: RunId): Promise<boolean> {
@@ -136,32 +152,30 @@ export class ApiClient {
     return !run.open;
   }
 
-  public async err(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<string> {
-    const path = `/runs/${runId}/err?phase=${location}`;
-    const headers = new Headers();
-    if (opts?.range) {
-      headers.set("Range", opts?.range)
-    }
-    const resp = await this.request(path, {
-      headers
-    });
-    return resp.text();
+  public async errText(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<string> {
+    return (await this._err(runId, location, opts)).text();
   }
 
-  public async errBytes(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<Blob> {
-    const path = `/runs/${runId}/err?phase=${location}`;
-    const headers = new Headers();
-    if (opts?.range) {
-      headers.set("Range", opts?.range)
-    }
-    const resp = await this.request(path, {
-      headers
-    });
-    return resp.blob();
+  public async err(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<Blob> {
+    return (await this._err(runId, location, opts)).blob();
+  }
+  public async _err(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<Response> {
+    return (await this._file(runId, location, "err", opts));
   }
 
-  public async input(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<string> {
-    const path = `/runs/${runId}/input?phase=${location}`;
+  public async inputText(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<string> {
+    return (await this._input(runId, location, opts)).text();
+  }
+
+  public async input(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<Blob> {
+    return (await this._input(runId, location, opts)).blob();
+  }
+  public async _input(runId: RunId, location: Phase.Storage | Phase.Running, opts?: { range?: string }): Promise<Response> {
+    return (await this._file(runId, location, "input", opts));
+  }
+
+  public async _file(runId: RunId, location: Phase.Storage | Phase.Running, file: string, opts?: { range?: string }): Promise<Response> {
+    const path = `/runs/${runId}/${file}?phase=${location}`;
     const headers = new Headers();
     if (opts?.range) {
       headers.set("Range", opts?.range)
@@ -169,15 +183,14 @@ export class ApiClient {
     const resp = await this.request(path, {
       headers
     });
-    return resp.text();
+    return resp;
   }
 
   public async zip(runId: RunId): Promise<ReadableStream<Uint8Array> | null> {
     const path = `/runs/${runId}/zip`;
     const resp = await this.request(path);
-    return resp.body;
+    return this.processResponseBody(resp);
   }
-
 
   public async data(runId: string, location: Phase, csvtype: string, value: string): Promise<DataVector<number, number>> {
     const queryParams = new URLSearchParams({
@@ -187,19 +200,16 @@ export class ApiClient {
     });
     const path = `/runs/${runId}/data${queryParams.size > 0 ? `?${queryParams.toString()}` : ""}`;
     const resp = await this.request(path);
-    const r = await resp.json();
-    return r.data;
+    return this.processResponseJsonApi(resp);
   }
-
 
   public async runData(runId: string): Promise<RunData> {
     const path = `/runs/${runId}/data/run`;
     const resp = await this.request(path);
-    const r = await resp.json();
-    return r.data;
+    return this.processResponseJsonApi(resp);
   }
 
-  public async newRun(startParams: SubmitStartParams, input: ReadableStream<Uint8Array> | string): Promise<RunEntry> {
+  public async newRun(startParams: SubmitStartParams, input: BodyInit): Promise<RunEntry> {
     if (!startParams.chid || startParams.chid.length === 0) {
       throw new Error("no CHID provided");
     }
@@ -225,34 +235,30 @@ export class ApiClient {
         body: input,
         method: "POST"
       });
-      if (!resp.ok) {
-        if (resp.status === 409) {
-          // There was a conflict, this means either it failed due to the
-          // idempotency key or there is already an open model.
-          throw new Error(await resp.json())
-        } else {
-          const errMsg = await resp.text();
-          console.error(errMsg);
-          throw new Error(errMsg)
-          // throw new Error(await resp.json())
-        }
+      if (!resp.ok && resp.status === 409) {
+        // There was a conflict, this means either it failed due to the
+        // idempotency key or there is already an open model. Not sure we
+        // particularly need to special-case this
+        throw new Error(await resp.json())
+      } else {
+        return this.processResponseJsonApi(resp);
       }
-      return (await resp.json()).data;
     } catch (err) {
       throw err;
     }
   }
 
   public async load(): Promise<CurrentUsage> {
+    console.log("this.accountId", this.accountId)
     const path = `/orgs/${this.accountId}/load`;
     const resp = await this.request(path);
-    return (await resp.json()).data;
+    return this.processResponseJsonApi(resp);
   }
 
   public async me(): Promise<User> {
     const path = "/me";
     const resp = await this.request(path);
-    return (await resp.json()).data;
+    return this.processResponseJsonApi(resp);
   }
 
   public org(): Promise<UserOrgInfo | undefined> {
@@ -265,12 +271,12 @@ export class ApiClient {
     return readableStreamFromAsyncIterator(follower[Symbol.asyncIterator]());
   }
   async stop(runId: string) {
-    const result = await this.request(`/runs/${runId}/stop`, { method: "PUT" });
-    return result.text();
+    const resp = await this.request(`/runs/${runId}/stop`, { method: "PUT" });
+    return this.processResponseText(resp);
   }
   async kill(runId: string) {
-    const result = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
-    return result.text();
+    const resp = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
+    return this.processResponseText(resp);
   }
 }
 
@@ -287,7 +293,7 @@ class Follower implements AsyncIterable<Uint8Array> {
       this.closed = !run.open;
       // TODO: the server should be able to handle this element of phase
       const phase = closed ? Phase.Storage : Phase.Running;
-      const s = await this.client.errBytes(this.runId, phase, { range: `bytes=${this.nRead}-` });
+      const s = await this.client.err(this.runId, phase, { range: `bytes=${this.nRead}-` });
       if (!s) break;
       if (s.slice(this.nRead).size) {
         yield new Uint8Array(await s.slice(this.nRead).arrayBuffer());

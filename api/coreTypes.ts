@@ -1,6 +1,3 @@
-import { CredentialSet } from "./credentials.ts";
-
-export type GenericLoginResult = LoginSuccess<CredentialSet> | LoginFailure;
 export type LoginData = LoginDataMs | LoginDataKeys | LoginDataPassword;
 export type LoginResult<T extends LoginData> = LoginSuccess<T> | LoginFailure;
 export interface LoginSuccess<T> {

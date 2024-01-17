@@ -1,6 +1,8 @@
 import * as jose from "jose";
-import { LoginData } from "./coreTypes.ts";
+import { LoginData, LoginFailure, LoginSuccess } from "./coreTypes.ts";
 import { Client, AuthProviderCallback as MsalGraphAuthProviderCallback } from "@microsoft/microsoft-graph-client";
+
+export type GenericLoginResult = LoginSuccess<CredentialSet> | LoginFailure;
 
 export interface UserOrgInfo {
   user?: {
