@@ -121,36 +121,6 @@ export class CredentialSet {
       return undefined;
     }
   }
-
-  public get cachedUserOrgInfo(): UserOrgInfo | undefined {
-    const raw = localStorage.getItem(`${this.id}.userOrgInfo`,);
-    if (raw) {
-      try {
-        return JSON.parse(raw);
-      } catch (e) {
-        console.log(raw)
-        console.error(e);
-      }
-    }
-    return undefined;
-  }
-
-  public set cachedUserOrgInfo(org: UserOrgInfo) {
-    localStorage.setItem(`${this.id}.userOrgInfo`, JSON.stringify(org));
-  }
-
-  // async userOrgInfo(): Promise<UserOrgInfo | undefined> {
-  //   if (!this.#userOrgInfo) {
-  //     await this.refreshUserOrgInfo();
-  //   }
-  //   return this.#userOrgInfo;
-  // }
-  // async refreshUserOrgInfo() {
-  //   // TODO: there is a risk of introducing an infinite loop here
-  //   const api = new ApiClient(authFromLoginData(this.#credentials), this.accountId);
-  //   this.#userOrgInfo = await api.org() ?? {};
-  //   this.cachedUserOrgInfo = this.#userOrgInfo;
-  // }
 }
 
 

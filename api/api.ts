@@ -121,7 +121,10 @@ export class ApiClient {
     }
   }
 
-  public runs(filter?: RunFilter & { limit?: number }): RunEntryIter {
+  public async runs(filter?: RunFilter & { limit?: number }): Promise<RunEntryIter> {
+    if (!this.accountId) {
+      await this.init();
+    }
     return new RunEntryIter(this, filter);
   }
 
