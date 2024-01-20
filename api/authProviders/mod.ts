@@ -1,6 +1,6 @@
 import { Configuration, PublicClientApplication } from "@azure/msal-browser";
-import { SCOPES, createConfig } from "./authConfig.ts";
-import { UserOrgInfo, getGraphClient } from "../credentials.ts";
+import { createConfig, SCOPES } from "./authConfig.ts";
+import { getGraphClient, UserOrgInfo } from "../credentials.ts";
 
 export interface AuthProvider {
   init: () => Promise<void>;
@@ -37,23 +37,23 @@ export class MsalBrowserAuthProvider {
         scopes: SCOPES,
       };
       // TODO: handle account selection
-      return (await this.msalInstance.acquireTokenSilent(silentRequest)).idToken;
+      return (await this.msalInstance.acquireTokenSilent(silentRequest))
+        .idToken;
     } else {
       const loginRequest = {
         scopes: SCOPES,
-        "prompt": "select_account"
+        "prompt": "select_account",
       };
       console.log(loginRequest);
       await this.msalInstance.acquireTokenRedirect(loginRequest);
-      throw new Error("unreachable")
+      throw new Error("unreachable");
     }
   }
   async org(): Promise<UserOrgInfo | undefined> {
     const graphClient = getGraphClient(await this.acquireToken());
     const user = await graphClient.api("/me").get();
-    const org =
-      (await graphClient.api("/organization?$select=displayName,id")
-        .get()).value[0];
+    const org = (await graphClient.api("/organization?$select=displayName,id")
+      .get()).value[0];
     let logoDataUrl: string | ArrayBuffer | null | undefined;
     try {
       const squareLogo = await graphClient.api(
@@ -66,9 +66,8 @@ export class MsalBrowserAuthProvider {
           reader.readAsDataURL(squareLogo);
         },
       );
-
     } catch (_e) {
-      console.warn(`no logo for organization ${org.displayName} (${org.id})`)
+      console.warn(`no logo for organization ${org.displayName} (${org.id})`);
     }
     return {
       user,
@@ -87,7 +86,7 @@ async function importKey(keyData: BufferSource) {
       hash: { name: "SHA-256" },
     },
     false,
-    ["sign"]
+    ["sign"],
   );
 }
 
@@ -97,8 +96,8 @@ async function hmac(key: CryptoKey, data: BufferSource) {
       name: "HMAC",
     },
     key,
-    data
-  )
+    data,
+  );
   return new Uint8Array(signature);
 }
 
@@ -126,7 +125,9 @@ export class KeyAuthProvider {
   }
   async init() {
     this.secretKey = await importKey(this.secretKeyS);
-    this.hmacDigest = bytesToBase64(await hmac(this.secretKey, this.idKeyBytes));
+    this.hmacDigest = bytesToBase64(
+      await hmac(this.secretKey, this.idKeyBytes),
+    );
     this.#token = `${this.idKeyString}:${this.hmacDigest}`;
   }
 
@@ -139,7 +140,6 @@ export class KeyAuthProvider {
     } else {
       throw new Error("Could not initialize token");
     }
-
   }
   org(): Promise<UserOrgInfo | undefined> {
     return Promise.resolve({
@@ -150,12 +150,20 @@ export class KeyAuthProvider {
   }
 }
 
-
 export class PasswordAuthProvider {
   #passwordToken?: string;
-  constructor(public accountId: string, public username: string, private password: string, public api_endpoint: string = "https://api.smokecloud.io") {
+  constructor(
+    public accountId: string,
+    public username: string,
+    private password: string,
+    public api_endpoint: string = "https://api.smokecloud.io",
+  ) {
   }
-  private async passwordLogin(accountId: string, username: string, password: string) {
+  private async passwordLogin(
+    accountId: string,
+    username: string,
+    password: string,
+  ) {
     const params = new URLSearchParams();
     params.set("accountid", accountId);
     params.set("username", username);

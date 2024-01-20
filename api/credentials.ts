@@ -1,6 +1,9 @@
 import * as jose from "jose";
 import { LoginData, LoginFailure, LoginSuccess } from "./coreTypes.ts";
-import { Client, AuthProviderCallback as MsalGraphAuthProviderCallback } from "@microsoft/microsoft-graph-client";
+import {
+  AuthProviderCallback as MsalGraphAuthProviderCallback,
+  Client,
+} from "@microsoft/microsoft-graph-client";
 
 export type GenericLoginResult = LoginSuccess<CredentialSet> | LoginFailure;
 
@@ -8,23 +11,29 @@ export interface UserOrgInfo {
   user?: {
     displayName: string;
     mail?: string;
-  },
+  };
   org?: {
     displayName?: string;
-  },
+  };
   logoDataUrl?: string;
-};
+}
 
-export type CliContext = CliContextMs | CliContextKeys
-export type CliContextMs = BaseCliContext & Tokens & { received: number, id_key: undefined }
-export type CliContextKeys = BaseCliContext & { id_key: string, secret_key: string, access_token: undefined }
+export type CliContext = CliContextMs | CliContextKeys;
+export type CliContextMs = BaseCliContext & Tokens & {
+  received: number;
+  id_key: undefined;
+};
+export type CliContextKeys = BaseCliContext & {
+  id_key: string;
+  secret_key: string;
+  access_token: undefined;
+};
 
 export type BaseCliContext = {
   account_id: string;
   endpoint?: string;
   default_fds_version?: string;
-}
-
+};
 
 export type Tokens = {
   access_token: string;
@@ -33,7 +42,7 @@ export type Tokens = {
   refresh_token: string;
   scope: string;
   token_type: string;
-}
+};
 
 export class CredentialSet {
   #credentials: LoginData;
@@ -60,7 +69,7 @@ export class CredentialSet {
           tokens: this.#credentials.tokens,
           received: this.#credentials.received,
           // TODO: should we need accountId?
-          accountId: this.#credentials.account_id
+          accountId: this.#credentials.account_id,
         };
       case "keys":
         return {
@@ -83,11 +92,10 @@ export class CredentialSet {
   }
   get id(): string {
     switch (this.#credentials.type) {
-      case "microsoft":
-        {
-          const claims = jose.decodeJwt(this.#credentials.tokens.id_token);
-          return `${this.#credentials.type}.${claims.iss}.${claims.sub}`;
-        }
+      case "microsoft": {
+        const claims = jose.decodeJwt(this.#credentials.tokens.id_token);
+        return `${this.#credentials.type}.${claims.iss}.${claims.sub}`;
+      }
       case "keys":
         return `${this.#credentials.type}.${this.#credentials.id_key}`;
       case "password":
@@ -103,7 +111,7 @@ export class CredentialSet {
       case "keys":
         return this.#credentials.customerid;
       case "password":
-        return this.#credentials.account_id
+        return this.#credentials.account_id;
       default:
         throw new Error("unrecognised creds type");
     }
@@ -114,7 +122,8 @@ export class CredentialSet {
       const now = Math.floor((new Date()).getTime() / 1000);
       this.#credentials.received;
       this.#credentials.tokens.expires_in;
-      const expires = this.#credentials.received + this.#credentials.tokens.expires_in;
+      const expires = this.#credentials.received +
+        this.#credentials.tokens.expires_in;
       const remaining = expires - now;
       return remaining;
     } else {
@@ -122,7 +131,6 @@ export class CredentialSet {
     }
   }
 }
-
 
 export function getGraphClient(accessToken: string) {
   // Initialize Graph client

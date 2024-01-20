@@ -1,11 +1,20 @@
 import {
+  ApiClient,
+  KeyAuthProvider,
+  MsalBrowserAuthProvider,
+  Phase,
   PresenceProgress,
+  SubmitStartParams,
   toSimpleProgress,
-  ApiClient, SubmitStartParams, toTable, Phase, MsalBrowserAuthProvider, KeyAuthProvider
-} from "../api/api.ts"
+  toTable,
+} from "../api/api.ts";
 // import { load } from "https://deno.land/std@0.212.0/dotenv/mod.ts";
 
-async function runTest(client: ApiClient, fdsVersion: string, options?: { follow?: boolean }): Promise<PresenceProgress> {
+async function runTest(
+  client: ApiClient,
+  fdsVersion: string,
+  options?: { follow?: boolean },
+): Promise<PresenceProgress> {
   const chid = `room_fire_${fdsVersion.replaceAll(".", "_")}`;
   const startParams: SubmitStartParams = {
     fds_version: fdsVersion,
@@ -18,7 +27,9 @@ async function runTest(client: ApiClient, fdsVersion: string, options?: { follow
   for await (const run of client.runs({ chid })) {
     if (!firstRun || firstRun.open_time === undefined) {
       firstRun = run;
-    } else if (run.open_time !== undefined && run.open_time < firstRun.open_time) {
+    } else if (
+      run.open_time !== undefined && run.open_time < firstRun.open_time
+    ) {
       firstRun = run;
     }
   }
@@ -102,7 +113,9 @@ const fdsVersions = [
 async function main() {
   try {
     // const env = await load();
-    const auth = new MsalBrowserAuthProvider("e28c2818-dde5-4ba5-8bc4-482bfa57846b");
+    const auth = new MsalBrowserAuthProvider(
+      "e28c2818-dde5-4ba5-8bc4-482bfa57846b",
+    );
     // const auth = new KeyAuthProvider(env["ID_KEY"], env["SECRET_KEY"]);
     await auth.init();
     const client = new ApiClient(auth);
@@ -128,8 +141,8 @@ async function main() {
     });
     console.table(results);
   } catch (e) {
-    console.error("something went wrong")
-    console.error(e)
+    console.error("something went wrong");
+    console.error(e);
   }
 }
 

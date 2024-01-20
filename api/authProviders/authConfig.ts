@@ -13,7 +13,11 @@ export function createConfig(clientId: string): Promise<Configuration> {
     },
     system: {
       loggerOptions: {
-        loggerCallback(_loglevel: LogLevel, message: string, _containsPii: boolean) {
+        loggerCallback(
+          _loglevel: LogLevel,
+          message: string,
+          _containsPii: boolean,
+        ) {
           console.log(message);
         },
         piiLoggingEnabled: false,

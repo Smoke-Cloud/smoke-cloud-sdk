@@ -23,7 +23,7 @@ await build({
     },
     devDependencies: {
       "@types/uuid": "^9.0.1",
-      "@types/crypto-js": "^4.2.0"
+      "@types/crypto-js": "^4.2.0",
     },
   },
   postBuild() {
@@ -33,6 +33,6 @@ await build({
   },
   compilerOptions: {
     lib: ["ES2023", "DOM"],
-    target:"ES2022"
+    target: "ES2022",
   },
 });
