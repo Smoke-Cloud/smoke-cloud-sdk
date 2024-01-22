@@ -9,6 +9,7 @@
       "npm:crypto-js": "npm:crypto-js@4.2.0",
       "npm:crypto-js@4.2.0": "npm:crypto-js@4.2.0",
       "npm:jose@5.2.0": "npm:jose@5.2.0",
+      "npm:node-fetch": "npm:node-fetch@3.3.2",
       "npm:uuid@9.0.1": "npm:uuid@9.0.1"
     },
     "npm": {
@@ -55,10 +56,27 @@
         "integrity": "sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==",
         "dependencies": {}
       },
+      "data-uri-to-buffer@4.0.1": {
+        "integrity": "sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==",
+        "dependencies": {}
+      },
       "ecdsa-sig-formatter@1.0.11": {
         "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==",
         "dependencies": {
           "safe-buffer": "safe-buffer@5.2.1"
+        }
+      },
+      "fetch-blob@3.2.0": {
+        "integrity": "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==",
+        "dependencies": {
+          "node-domexception": "node-domexception@1.0.0",
+          "web-streams-polyfill": "web-streams-polyfill@3.3.2"
+        }
+      },
+      "formdata-polyfill@4.0.10": {
+        "integrity": "sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==",
+        "dependencies": {
+          "fetch-blob": "fetch-blob@3.2.0"
         }
       },
       "jose@5.2.0": {
@@ -133,6 +151,18 @@
         "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
         "dependencies": {}
       },
+      "node-domexception@1.0.0": {
+        "integrity": "sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==",
+        "dependencies": {}
+      },
+      "node-fetch@3.3.2": {
+        "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==",
+        "dependencies": {
+          "data-uri-to-buffer": "data-uri-to-buffer@4.0.1",
+          "fetch-blob": "fetch-blob@3.2.0",
+          "formdata-polyfill": "formdata-polyfill@4.0.10"
+        }
+      },
       "regenerator-runtime@0.14.1": {
         "integrity": "sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==",
         "dependencies": {}
@@ -157,6 +187,10 @@
       },
       "uuid@9.0.1": {
         "integrity": "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==",
+        "dependencies": {}
+      },
+      "web-streams-polyfill@3.3.2": {
+        "integrity": "sha512-3pRGuxRF5gpuZc0W+EpwQRmCD7gRqcDOMt688KmdlDAgAyaB1XlN0zq2njfDNm44XVdIouE7pZ6GzbdyH47uIQ==",
         "dependencies": {}
       },
       "yallist@4.0.0": {
