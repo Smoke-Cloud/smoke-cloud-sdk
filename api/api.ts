@@ -85,7 +85,8 @@ export class ApiClient {
   }
 
   private async processError(response: Response): Promise<Error> {
-    const errorResponse: ScApiErrorResponse = await response.json();
+    const errorResponse: ScApiErrorResponse = await response
+      .json() as ScApiErrorResponse;
     // return new Error(JSON.stringify(errorResponse.errors))
     return new Error(
       `${response.status}: ${response.statusText}: ${
@@ -99,7 +100,8 @@ export class ApiClient {
     if (response.ok) {
       // const contentType = response.headers.get("Content-Type")?.toLowerCase();
       // TODO: assert: (contentType === "application/json" || contentType === "application/vnd.api+json") {
-      return (await response.json()).data;
+      const t = await response.json() as { data: T };
+      return t.data;
     } else {
       throw await this.processError(response);
     }
@@ -109,7 +111,7 @@ export class ApiClient {
     response: Response,
   ): Promise<ReadableStream<Uint8Array> | null> {
     if (response.ok) {
-      return await response.body;
+      return (await response.body) as ReadableStream<Uint8Array> | null;
     } else {
       throw await this.processError(response);
     }
@@ -128,7 +130,8 @@ export class ApiClient {
     const resp = await this.request("/me/account_id", { method: "GET" });
     if (resp.ok) {
       // TODO: this route still needs to be made compliant with JSONAPI
-      return (await resp.json());
+      const accountId = await resp.json() as string;
+      return accountId;
     } else {
       throw await this.processError(resp);
     }
@@ -300,7 +303,8 @@ export class ApiClient {
         // There was a conflict, this means either it failed due to the
         // idempotency key or there is already an open model. Not sure we
         // particularly need to special-case this
-        throw new Error(await resp.json());
+        const err: any = await resp.json();
+        throw new Error(err);
       } else {
         return this.processResponseJsonApi(resp);
       }
@@ -401,7 +405,8 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
       if (this.nextUrl) {
         const resp = await this.client.request(this.nextUrl);
         if (resp.ok) {
-          const result: PagedResponse<RunEntry> = await resp.json();
+          const result: PagedResponse<RunEntry> = await resp
+            .json() as PagedResponse<RunEntry>;
           for (const r of result.data) {
             yield r;
           }
@@ -411,7 +416,8 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
             break;
           }
         } else {
-          throw new Error(await resp.json());
+          const err: any = await resp.json();
+          throw new Error(err);
         }
       }
     }
