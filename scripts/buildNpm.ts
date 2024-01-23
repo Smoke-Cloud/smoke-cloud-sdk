@@ -27,6 +27,9 @@ await build({
       "@types/uuid": "^9.0.1",
       "@types/crypto-js": "^4.2.0",
     },
+    engines: {
+      node: ">=18.16.0",
+    },
   },
   postBuild() {
     // steps to run after building and before running the tests
