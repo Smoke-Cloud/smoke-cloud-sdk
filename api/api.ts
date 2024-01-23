@@ -85,13 +85,24 @@ export class ApiClient {
   }
 
   private async processError(response: Response): Promise<Error> {
-    const errorResponse: ScApiErrorResponse = await response
-      .json() as ScApiErrorResponse;
+    let errorResponse: ScApiErrorResponse | undefined;
+    const errorResponseText: string = await response
+      .text();
+    try {
+      errorResponse = JSON.parse(
+        errorResponseText,
+      ) as ScApiErrorResponse;
+    } catch {
+      // pass
+    }
     // return new Error(JSON.stringify(errorResponse.errors))
+    const errMsg = errorResponse
+      ? (errorResponse.errors
+        ? JSON.stringify(errorResponse.errors)
+        : JSON.stringify(errorResponse))
+      : errorResponseText;
     return new Error(
-      `${response.status}: ${response.statusText}: ${
-        JSON.stringify(errorResponse.errors)
-      }`,
+      `${response.status}: ${response.statusText}: ${errMsg}`,
     );
   }
 
@@ -127,11 +138,14 @@ export class ApiClient {
 
   // TODO: could we have multiple organizations?
   private async getAccountId(): Promise<string> {
-    const resp = await this.request("/me/account_id", { method: "GET" });
+    const resp = await this.request("/me", { method: "GET" });
     if (resp.ok) {
-      // TODO: this route still needs to be made compliant with JSONAPI
-      const accountId = await resp.json() as string;
-      return accountId;
+      const user = (await this.processResponseJsonApi(resp)) as {
+        account_id: string;
+        username?: string;
+        id?: string;
+      };
+      return user.account_id;
     } else {
       throw await this.processError(resp);
     }
