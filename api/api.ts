@@ -7,6 +7,7 @@ import {
   Phase,
   ProgressInfo,
   PublicRunningStatus,
+  RunBilling,
   RunEntry,
   RunId,
   User,
@@ -274,8 +275,8 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
-  public async runData(runId: string): Promise<RunData> {
-    const path = `/runs/${runId}/data/run`;
+  public async runData(runId: string, location: Phase): Promise<RunData> {
+    const path = `/runs/${runId}/data/run?phase=${location}`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
@@ -328,10 +329,32 @@ export class ApiClient {
   }
 
   public async load(): Promise<CurrentUsage> {
-    console.log("this.accountId", this.accountId);
     const path = `/orgs/${this.accountId}/load`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
+  }
+
+  public async outstanding(): Promise<RunBilling[]> {
+    const path = `/orgs/${this.accountId}/billing/outstanding`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  public async outstandingTotal(): Promise<
+    { currency: string; total: number }
+  > {
+    const runs = await this.outstanding();
+    let result = {
+      currency: "GBP",
+      total: 0,
+    };
+    for (const run of runs) {
+      console.log(run.cost);
+      result.total += run.cost[1];
+      result.currency = run.cost[0].toUpperCase();
+    }
+    console.log(runs.length);
+    return result;
   }
 
   public async me(): Promise<User> {

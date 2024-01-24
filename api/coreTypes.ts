@@ -86,6 +86,19 @@ export interface RunEntry {
   no_archive: boolean;
 }
 
+export interface RunBilling {
+  account_id: string;
+  run_id: string;
+  project?: string;
+  user?: string;
+  //  instance_type: smoke_cloud_core::InstanceType,
+  duration: {
+    secs: number;
+    nanos: number;
+  };
+  cost: [string, number];
+}
+
 export interface ProgressInfo {
   running: PresenceProgress;
   stored: PresenceProgress;
