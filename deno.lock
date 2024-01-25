@@ -322,5 +322,13 @@
     "https://esm.sh/v135/jose@5.2.0/denonext/jose.mjs": "30649d384cd494bce9da566d00986d553ac30ae422acfe15f4edf3b75864e890",
     "https://esm.sh/v135/tslib@2.6.2/denonext/tslib.mjs": "29782bcd3139f77ec063dc5a9385c0fff4a8d0a23b6765c73d9edeb169a04bf1",
     "https://esm.sh/v135/uuid@9.0.1/denonext/uuid.mjs": "7d7d3aa57fa136e2540886654c416d9da10d8cfebe408bae47fd47070f0bfb2a"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@azure/msal-browser",
+      "npm:@microsoft/microsoft-graph-client@3.0.7",
+      "npm:jose@5.2.0",
+      "npm:uuid@9.0.1"
+    ]
   }
 }

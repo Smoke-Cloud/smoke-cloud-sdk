@@ -343,18 +343,10 @@ export class ApiClient {
   public async outstandingTotal(): Promise<
     { currency: string; total: number }
   > {
-    const runs = await this.outstanding();
-    let result = {
-      currency: "GBP",
-      total: 0,
-    };
-    for (const run of runs) {
-      console.log(run.cost);
-      result.total += run.cost[1];
-      result.currency = run.cost[0].toUpperCase();
-    }
-    console.log(runs.length);
-    return result;
+    const path = `/orgs/${this.accountId}/billing/outstanding`;
+    const resp = await this.request(path);
+    const total = (await this.processResponseJsonApi(resp)) as [string, number];
+    return { currency: total[0].toUpperCase(), total: total[1] };
   }
 
   public async me(): Promise<User> {

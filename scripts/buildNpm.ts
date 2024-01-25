@@ -7,8 +7,8 @@ await build({
   outDir: "./npm",
   shims: {
     deno: true,
-    undici: true,
-    blob: true,
+    // undici: true,
+    // blob: true,
   },
   importMap: "deno.json",
   package: {
