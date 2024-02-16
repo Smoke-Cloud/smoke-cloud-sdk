@@ -1,4 +1,7 @@
-import { Configuration, PublicClientApplication } from "@azure/msal-browser";
+import {
+  Configuration,
+  PublicClientApplication,
+} from "npm:@azure/msal-browser";
 import { createConfig, SCOPES } from "./authConfig.ts";
 import { getGraphClient, UserOrgInfo } from "../credentials.ts";
 
@@ -78,7 +81,7 @@ export class MsalBrowserAuthProvider {
 }
 
 async function importKey(keyData: BufferSource) {
-  return await window.crypto.subtle.importKey(
+  return await globalThis.crypto.subtle.importKey(
     "raw",
     keyData,
     {
@@ -91,7 +94,7 @@ async function importKey(keyData: BufferSource) {
 }
 
 async function hmac(key: CryptoKey, data: BufferSource) {
-  const signature = await window.crypto.subtle.sign(
+  const signature = await globalThis.crypto.subtle.sign(
     {
       name: "HMAC",
     },

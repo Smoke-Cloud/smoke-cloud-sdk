@@ -1,4 +1,4 @@
-import { Configuration, LogLevel } from "@azure/msal-browser";
+import { Configuration, LogLevel } from "npm:@azure/msal-browser";
 
 export const SCOPES = ["User.Read", "email"];
 
