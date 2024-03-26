@@ -91,6 +91,14 @@ export interface RunEntry {
   running: PresenceProgress;
   stored: PresenceProgress;
   no_archive: boolean;
+  run_params?: {
+    instance_type: string;
+    fds_version: string;
+    core_count: number;
+    mem_gb: number;
+    n_processes?: number;
+    n_threads?: number;
+  };
 }
 
 export interface RunBilling {
