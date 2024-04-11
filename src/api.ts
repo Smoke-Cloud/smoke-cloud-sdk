@@ -336,6 +336,18 @@ export class ApiClient {
     return this.processResponseBody(resp);
   }
 
+  public async memLog(runId: RunId): Promise<DataVector<Date, number>> {
+    const path = `/runs/${runId}/log/mem`;
+    const resp = await this.request(path);
+    const vector: DataVector<Date, number> = await this
+      .processResponseJsonApi(resp);
+    vector.values = vector.values.map((p) => ({
+      x: new Date(p.x),
+      y: p.y,
+    }));
+    return vector;
+  }
+
   public async data(
     runId: string,
     location: Phase,
