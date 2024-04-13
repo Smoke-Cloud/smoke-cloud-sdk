@@ -348,6 +348,30 @@ export class ApiClient {
     return vector;
   }
 
+  public async cpuLog(runId: RunId): Promise<DataVector<Date, number>> {
+    const path = `/runs/${runId}/log/cpu`;
+    const resp = await this.request(path);
+    const vector: DataVector<Date, number> = await this
+      .processResponseJsonApi(resp);
+    vector.values = vector.values.map((p) => ({
+      x: new Date(p.x),
+      y: p.y,
+    }));
+    return vector;
+  }
+
+  public async diskLog(runId: RunId): Promise<DataVector<Date, number>> {
+    const path = `/runs/${runId}/log/disk`;
+    const resp = await this.request(path);
+    const vector: DataVector<Date, number> = await this
+      .processResponseJsonApi(resp);
+    vector.values = vector.values.map((p) => ({
+      x: new Date(p.x),
+      y: p.y,
+    }));
+    return vector;
+  }
+
   public async data(
     runId: string,
     location: Phase,
