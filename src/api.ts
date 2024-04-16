@@ -390,8 +390,11 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
-  public async runData(runId: string, location: Phase): Promise<RunData> {
-    const path = `/runs/${runId}/data/run?phase=${location}`;
+  public async runData(runId: string, location?: Phase): Promise<RunData> {
+    let path = `/runs/${runId}/data/run`;
+    if (location) {
+      path += `?phase=${location}`;
+    }
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
@@ -461,6 +464,15 @@ export class ApiClient {
     { currency: string; total: number }
   > {
     const path = `/orgs/${this.accountId}/billing/outstanding/total`;
+    const resp = await this.request(path);
+    const total = (await this.processResponseJsonApi(resp)) as [string, number];
+    return { currency: total[0].toUpperCase(), total: total[1] };
+  }
+
+  public async couponsTotal(): Promise<
+    { currency: string; total: number }
+  > {
+    const path = `/orgs/${this.accountId}/billing/coupons`;
     const resp = await this.request(path);
     const total = (await this.processResponseJsonApi(resp)) as [string, number];
     return { currency: total[0].toUpperCase(), total: total[1] };
