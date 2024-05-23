@@ -1,9 +1,9 @@
-import * as jose from "npm:jose";
+import * as jose from "jose";
 import { LoginData, LoginFailure, LoginSuccess } from "./coreTypes.ts";
 import {
   AuthProviderCallback as MsalGraphAuthProviderCallback,
   Client,
-} from "npm:@microsoft/microsoft-graph-client";
+} from "@microsoft/microsoft-graph-client";
 
 export type GenericLoginResult = LoginSuccess<CredentialSet> | LoginFailure;
 

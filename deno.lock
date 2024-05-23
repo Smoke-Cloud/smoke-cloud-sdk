@@ -4,8 +4,11 @@
     "specifiers": {
       "npm:@azure/msal-browser": "npm:@azure/msal-browser@3.7.0",
       "npm:@microsoft/microsoft-graph-client": "npm:@microsoft/microsoft-graph-client@3.0.7",
+      "npm:@microsoft/microsoft-graph-client@3.0.7": "npm:@microsoft/microsoft-graph-client@3.0.7",
       "npm:jose": "npm:jose@5.2.0",
-      "npm:uuid": "npm:uuid@9.0.1"
+      "npm:jose@5.2.0": "npm:jose@5.2.0",
+      "npm:uuid": "npm:uuid@9.0.1",
+      "npm:uuid@9.0.1": "npm:uuid@9.0.1"
     },
     "npm": {
       "@azure/msal-browser@3.7.0": {
@@ -124,5 +127,16 @@
     "https://deno.land/x/ts_morph@20.0.0/common/typescript.js": "b9edf0a451685d13e0467a7ed4351d112b74bd1e256b915a2b941054e31c1736",
     "https://deno.land/x/wasmbuild@0.15.1/cache.ts": "9d01b5cb24e7f2a942bbd8d14b093751fa690a6cde8e21709ddc97667e6669ed",
     "https://deno.land/x/wasmbuild@0.15.1/loader.ts": "8c2fc10e21678e42f84c5135d8ab6ab7dc92424c3f05d2354896a29ccfd02a63"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@azure/msal-browser",
+      "npm:@azure/msal-node",
+      "npm:@azure/msal-node-extensions@1.0.16",
+      "npm:@microsoft/microsoft-graph-client@3.0.7",
+      "npm:jose@5.2.0",
+      "npm:open@10.0.3",
+      "npm:uuid@9.0.1"
+    ]
   }
 }

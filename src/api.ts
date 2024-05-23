@@ -1,4 +1,4 @@
-import * as uuid from "npm:uuid";
+import * as uuid from "uuid";
 import {
   coresToInstance,
   type CurrentUsage,
@@ -414,6 +414,9 @@ export class ApiClient {
       fds_version: startParams.fds_version,
       instance_type: instanceType,
     };
+    if (startParams.placement) {
+      params.placement = startParams.placement;
+    }
     if (startParams.project) {
       params.project = startParams.project;
     }
@@ -587,6 +590,7 @@ export interface SubmitStartParams {
   chid: string;
   fds_version: string;
   instance_type: NCores | InstanceType;
+  placement?: "cloud";
 }
 
 export interface UploadProgressResult {

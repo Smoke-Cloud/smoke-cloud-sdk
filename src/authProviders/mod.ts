@@ -1,7 +1,4 @@
-import {
-  Configuration,
-  PublicClientApplication,
-} from "npm:@azure/msal-browser";
+import { Configuration, PublicClientApplication } from "@azure/msal-browser";
 import { createConfig, SCOPES } from "./authConfig.ts";
 import { getGraphClient, UserOrgInfo } from "../credentials.ts";
 
