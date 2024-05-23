@@ -131,6 +131,12 @@ export class CredentialSet {
       return undefined;
     }
   }
+  setUserOrgInfo(userOrgInfo: UserOrgInfo) {
+    this.#userOrgInfo = userOrgInfo;
+  }
+  getUserOrgInfo() {
+    return this.#userOrgInfo;
+  }
 }
 
 export function getGraphClient(accessToken: string) {
