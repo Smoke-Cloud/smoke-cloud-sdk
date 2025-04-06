@@ -50,6 +50,7 @@ export class ApiClient {
   public api_endpoint = new URL("https://api.smokecloud.io/v3");
   public storage_endpoint = new URL("https://store01.smokecloud.io/v3");
   public accountId?: string;
+  private initialized: boolean = false;
   constructor(private authProvider: AuthProvider, options?: {
     api_endpoint?: string;
     storage_endpoint?: string;
@@ -65,6 +66,7 @@ export class ApiClient {
   public async init() {
     await this.authProvider.init();
     this.accountId = await this.getAccountId();
+    this.initialized = true;
   }
 
   async request(path: string, init?: RequestInit): Promise<Response> {
