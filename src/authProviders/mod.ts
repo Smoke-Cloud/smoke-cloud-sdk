@@ -12,7 +12,9 @@ export interface AuthProvider {
 export class MsalBrowserAuthProvider {
   private msalConfig?: Configuration;
   private msalInstance?: PublicClientApplication;
-  constructor(public clientId: string) {
+  public clientId: string;
+  constructor(clientId: string) {
+    this.clientId = clientId;
   }
   async init() {
     this.msalConfig = await createConfig(this.clientId);
@@ -152,12 +154,20 @@ export class KeyAuthProvider {
 
 export class PasswordAuthProvider {
   #passwordToken?: string;
+  public accountId: string;
+  public username: string;
+  private password: string;
+  public api_endpoint: string = "https://api.smokecloud.io";
   constructor(
-    public accountId: string,
-    public username: string,
-    private password: string,
-    public api_endpoint: string = "https://api.smokecloud.io",
+    accountId: string,
+    username: string,
+    password: string,
+    api_endpoint: string = "https://api.smokecloud.io",
   ) {
+    this.accountId = accountId;
+    this.username = username;
+    this.password = password;
+    this.api_endpoint = api_endpoint;
   }
   private async passwordLogin(
     accountId: string,

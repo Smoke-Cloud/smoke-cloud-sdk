@@ -51,10 +51,12 @@ export class ApiClient {
   public storage_endpoint = new URL("https://store01.smokecloud.io/v3");
   public accountId?: string;
   private initialized: boolean = false;
-  constructor(private authProvider: AuthProvider, options?: {
+  private authProvider: AuthProvider;
+  constructor(authProvider: AuthProvider, options?: {
     api_endpoint?: string;
     storage_endpoint?: string;
   }) {
+    this.authProvider = authProvider;
     if (options?.api_endpoint) {
       this.api_endpoint = new URL(options.api_endpoint);
     }
@@ -427,28 +429,24 @@ export class ApiClient {
     const path = `/orgs/${this.accountId}/runs${
       queryParams.size > 0 ? `?${queryParams.toString()}` : ""
     }`;
-    try {
-      // Post the submission info.
-      const resp = await this.request(path, {
-        headers: new Headers({
-          // TODO: this is not actually used currently
-          "Idempotency-Key": uuid.v4(),
-          "Content-Type": "application/octet-stream",
-        }),
-        body: input,
-        method: "POST",
-      });
-      if (!resp.ok && resp.status === 409) {
-        // There was a conflict, this means either it failed due to the
-        // idempotency key or there is already an open model. Not sure we
-        // particularly need to special-case this
-        const err: any = await resp.json();
-        throw new Error(err);
-      } else {
-        return this.processResponseJsonApi(resp);
-      }
-    } catch (err) {
-      throw err;
+    // Post the submission info.
+    const resp = await this.request(path, {
+      headers: new Headers({
+        // TODO: this is not actually used currently
+        "Idempotency-Key": uuid.v4(),
+        "Content-Type": "application/octet-stream",
+      }),
+      body: input,
+      method: "POST",
+    });
+    if (!resp.ok && resp.status === 409) {
+      // There was a conflict, this means either it failed due to the
+      // idempotency key or there is already an open model. Not sure we
+      // particularly need to special-case this
+      const err = await resp.json();
+      throw new Error(err);
+    } else {
+      return this.processResponseJsonApi(resp);
     }
   }
 
@@ -511,7 +509,11 @@ export class ApiClient {
 class Follower implements AsyncIterable<Uint8Array> {
   private closed = false;
   private nRead = 0;
-  constructor(private client: ApiClient, public runId: RunId) {
+  public client: ApiClient;
+  public runId: RunId;
+  constructor(client: ApiClient, runId: RunId) {
+    this.client = client;
+    this.runId = runId;
   }
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array> {
     while (!this.closed) {
@@ -544,9 +546,10 @@ export interface PagedResponse<T> {
 export class RunEntryIter implements AsyncIterable<RunEntry> {
   private nextUrl?: string;
   constructor(
-    private client: ApiClient,
+    client: ApiClient,
     filter?: RunFilter & { limit?: number },
   ) {
+    this.client = client;
     const params = new URLSearchParams();
     if (filter?.updatedSince != undefined) {
       params.set("from_time", filter?.updatedSince.toString());
@@ -579,7 +582,7 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
             break;
           }
         } else {
-          const err: any = await resp.json();
+          const err = await resp.json();
           throw new Error(err);
         }
       }
@@ -600,11 +603,10 @@ export interface UploadProgressResult {
   status: UploadStatus;
 }
 
-export enum UploadStatus {
-  Running = "running",
-  Completed = "completed",
-  Failed = "failed",
-}
+export type UploadStatus =
+  | "running"
+  | "completed"
+  | "failed";
 
 export function toTable(runs: PublicRunningStatus[]) {
   return runs.map(toTableRun);

@@ -121,8 +121,6 @@ export class CredentialSet {
     if (this.#credentials.type === "microsoft") {
       // check if we need to reauthorize
       const now = Math.floor((new Date()).getTime() / 1000);
-      this.#credentials.received;
-      this.#credentials.tokens.expires_in;
       const expires = this.#credentials.received +
         this.#credentials.tokens.expires_in;
       const remaining = expires - now;

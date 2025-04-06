@@ -166,14 +166,13 @@ export interface ModelSummary {
   runs: RunEntry[];
 }
 
-export enum InstanceType {
-  Cores1 = "Cores1",
-  Cores2 = "Cores2",
-  Cores4 = "Cores4",
-  Cores8 = "Cores8",
-  Cores16 = "Cores16",
-  Cores32 = "Cores32",
-}
+export type InstanceType =
+  | "Cores1"
+  | "Cores2"
+  | "Cores4"
+  | "Cores8"
+  | "Cores16"
+  | "Cores32";
 
 export type NCores = 1 | 2 | 4 | 8 | 16 | 32;
 
@@ -194,11 +193,10 @@ export function coresToInstance(nCores: NCores): InstanceType {
   }
 }
 
-export enum Phase {
-  Staging = "staging",
-  Storage = "storage",
-  Running = "running",
-}
+export type Phase =
+  | "staging"
+  | "storage"
+  | "running";
 
 export interface User {
   Sc?: {

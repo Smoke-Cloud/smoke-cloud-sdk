@@ -25,17 +25,17 @@ export function csvArrToVecs(
   // find the index of value
   const valueIndex = nameArray.indexOf(value);
   if (valueIndex < 0) return;
-  let values: {
+  const values: {
     x: number;
     y: number;
   }[] = [];
-  let x_units = arr[0][timeIndex];
-  let x_name = arr[1][timeIndex];
+  const x_units = arr[0][timeIndex];
+  const x_name = arr[1][timeIndex];
 
-  let y_units = arr[0][valueIndex];
-  let y_name = arr[1][valueIndex];
+  const y_units = arr[0][valueIndex];
+  const y_name = arr[1][valueIndex];
   for (let i = 0; i < arr.length; i++) {
-    let val: {
+    const val: {
       x: number;
       y: number;
     } = {
@@ -61,7 +61,7 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
   strDelimiter = strDelimiter || ",";
 
   // Create a regular expression to parse the CSV values.
-  var objPattern = new RegExp(
+  const objPattern = new RegExp(
     (
       // Delimiters.
       "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
@@ -75,17 +75,19 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
 
   // Create an array to hold our data. Give the array
   // a default empty first row.
-  var arrData: string[][] = [[]];
+  const arrData: string[][] = [[]];
 
   // Create an array to hold our individual pattern
   // matching groups.
-  var arrMatches = null;
+  const arrMatches = null;
 
   // Keep looping over the regular expression matches
   // until we can no longer find a match.
-  while (arrMatches = objPattern.exec(strData)) {
+  while (true) {
+    arrMatches = objPattern.exec(strData);
+    if (!arrMatches) break;
     // Get the delimiter that was found.
-    var strMatchedDelimiter = arrMatches[1];
+    const strMatchedDelimiter = arrMatches[1];
 
     // Check to see if the given delimiter has a length
     // (is not the start of string) and if it matches
@@ -100,7 +102,7 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
       arrData.push([]);
     }
 
-    var strMatchedValue;
+    let strMatchedValue;
 
     // Now that we have our delimiter out of the way,
     // let"s check to see which kind of value we
