@@ -1,7 +1,7 @@
 import * as jose from "jose";
-import { LoginData, LoginFailure, LoginSuccess } from "./coreTypes.ts";
+import type { LoginData, LoginFailure, LoginSuccess } from "./coreTypes.ts";
 import {
-  AuthProviderCallback as MsalGraphAuthProviderCallback,
+  type AuthProviderCallback as MsalGraphAuthProviderCallback,
   Client,
 } from "@microsoft/microsoft-graph-client";
 

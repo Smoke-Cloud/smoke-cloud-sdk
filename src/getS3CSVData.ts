@@ -79,7 +79,7 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
 
   // Create an array to hold our individual pattern
   // matching groups.
-  const arrMatches = null;
+  let arrMatches: RegExpExecArray | null = null;
 
   // Keep looping over the regular expression matches
   // until we can no longer find a match.

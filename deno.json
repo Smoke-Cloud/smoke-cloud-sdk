@@ -1,15 +1,23 @@
 {
   "imports": {
-    "uuid": "npm:uuid@9.0.1",
     "jose": "npm:jose@5.2.0",
     "@microsoft/microsoft-graph-client": "npm:@microsoft/microsoft-graph-client@3.0.7",
     "@azure/msal-browser": "npm:@azure/msal-browser",
-    "@azure/msal-node": "npm:@azure/msal-node",
-    "@azure/msal-node-extensions": "npm:@azure/msal-node-extensions@1.0.16",
     "open": "npm:open@10.0.3"
   },
-  "tasks": { "build-npm": "deno run -A scripts/buildNpm.ts" },
+  "tasks": {
+    "build-npm": "deno run -A scripts/buildNpm.ts",
+    "build-browser": "deno run -A scripts/buildBrowser.ts"
+  },
   "fmt": {
-    "exclude": ["npm/"]
-  }
+    "exclude": [
+      "npm/"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      "npm/"
+    ]
+  },
+  "main": "./src/api.ts"
 }

@@ -1,4 +1,4 @@
-import { build, emptyDir } from "https://deno.land/x/dnt@0.39.0/mod.ts";
+import { build, emptyDir } from "jsr:@deno/dnt";
 
 await emptyDir("./npm");
 
@@ -11,6 +11,7 @@ await build({
     // blob: true,
   },
   importMap: "deno.json",
+  rootTestDir: "./src/tests",
   package: {
     name: "smoke-cloud-sdk",
     version: Deno.args[0],

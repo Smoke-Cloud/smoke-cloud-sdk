@@ -1,7 +1,5 @@
-import * as uuid from "uuid";
-import {
-  coresToInstance,
-  type CurrentUsage,
+import type {
+  CurrentUsage,
   InstanceType,
   NCores,
   Phase,
@@ -13,9 +11,10 @@ import {
   Snapshot,
   User,
 } from "./coreTypes.ts";
-import { UserOrgInfo } from "./credentials.ts";
-import { DataVector, RunData } from "./getS3CSVData.ts";
-import { AuthProvider } from "./authProviders/mod.ts";
+import { coresToInstance } from "./coreTypes.ts";
+import type { UserOrgInfo } from "./credentials.ts";
+import type { DataVector, RunData } from "./getS3CSVData.ts";
+import type { AuthProvider } from "./authProviders/mod.ts";
 export * from "./credentials.ts";
 export * from "./coreTypes.ts";
 export * from "./getS3CSVData.ts";
@@ -273,7 +272,7 @@ export class ApiClient {
 
   public async errText(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<string> {
     return (await this._err(runId, location, opts)).text();
@@ -281,14 +280,14 @@ export class ApiClient {
 
   public async err(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<Blob> {
     return (await this._err(runId, location, opts)).blob();
   }
   public async _err(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<Response> {
     return (await this._file(runId, location, "err", opts));
@@ -296,7 +295,7 @@ export class ApiClient {
 
   public async inputText(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<string> {
     return (await this._input(runId, location, opts)).text();
@@ -304,14 +303,14 @@ export class ApiClient {
 
   public async input(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<Blob> {
     return (await this._input(runId, location, opts)).blob();
   }
   public async _input(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<Response> {
     return (await this._file(runId, location, "input", opts));
@@ -319,7 +318,7 @@ export class ApiClient {
 
   public async _file(
     runId: RunId,
-    location: Phase.Storage | Phase.Running,
+    location: "storage" | "running",
     file: string,
     opts?: { range?: string },
   ): Promise<Response> {
@@ -433,7 +432,7 @@ export class ApiClient {
     const resp = await this.request(path, {
       headers: new Headers({
         // TODO: this is not actually used currently
-        "Idempotency-Key": uuid.v4(),
+        "Idempotency-Key": crypto.randomUUID(),
         "Content-Type": "application/octet-stream",
       }),
       body: input,
@@ -522,7 +521,7 @@ class Follower implements AsyncIterable<Uint8Array> {
       const run = await this.client.run(this.runId);
       this.closed = !run.open;
       // TODO: the server should be able to handle this element of phase
-      const phase = closed ? Phase.Storage : Phase.Running;
+      const phase = closed ? "storage" : "running";
       const s = await this.client.err(this.runId, phase, {
         range: `bytes=${this.nRead}-`,
       });
@@ -545,6 +544,7 @@ export interface PagedResponse<T> {
 // TODO: add support for more filter options
 export class RunEntryIter implements AsyncIterable<RunEntry> {
   private nextUrl?: string;
+  private client: ApiClient;
   constructor(
     client: ApiClient,
     filter?: RunFilter & { limit?: number },

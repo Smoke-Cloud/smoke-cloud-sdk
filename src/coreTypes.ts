@@ -179,17 +179,17 @@ export type NCores = 1 | 2 | 4 | 8 | 16 | 32;
 export function coresToInstance(nCores: NCores): InstanceType {
   switch (nCores) {
     case 1:
-      return InstanceType.Cores1;
+      return "Cores1";
     case 2:
-      return InstanceType.Cores2;
+      return "Cores2";
     case 4:
-      return InstanceType.Cores4;
+      return "Cores4";
     case 8:
-      return InstanceType.Cores8;
+      return "Cores8";
     case 16:
-      return InstanceType.Cores16;
+      return "Cores16";
     case 32:
-      return InstanceType.Cores32;
+      return "Cores32";
   }
 }
 
