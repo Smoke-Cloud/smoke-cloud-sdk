@@ -1,4 +1,5 @@
-import { build, emptyDir } from "jsr:@deno/dnt";
+// deno-lint-ignore no-import-prefix
+import { build, emptyDir } from "jsr:@deno/dnt@0.42.3";
 
 await emptyDir("./npm");
 

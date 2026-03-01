@@ -51,10 +51,13 @@ export class ApiClient {
   public accountId?: string;
   private initialized: boolean = false;
   private authProvider: AuthProvider;
-  constructor(authProvider: AuthProvider, options?: {
-    api_endpoint?: string;
-    storage_endpoint?: string;
-  }) {
+  constructor(
+    authProvider: AuthProvider,
+    options?: {
+      api_endpoint?: string;
+      storage_endpoint?: string;
+    },
+  ) {
     this.authProvider = authProvider;
     if (options?.api_endpoint) {
       this.api_endpoint = new URL(options.api_endpoint);
@@ -76,10 +79,7 @@ export class ApiClient {
     const headers: Headers = new Headers(init?.headers);
     headers.append("Content-Type", "application/json");
     headers.append("Access-Control-Request-Headers", "Location");
-    headers.append(
-      "Authorization",
-      `Bearer ${token}`,
-    );
+    headers.append("Authorization", `Bearer ${token}`);
     params.headers = headers;
     if (path.length !== 0 && !path.startsWith("/")) {
       path = `/${path}`;
@@ -100,10 +100,7 @@ export class ApiClient {
     const headers: Headers = new Headers(init?.headers);
     headers.append("Content-Type", "application/json");
     headers.append("Access-Control-Request-Headers", "Location");
-    headers.append(
-      "Authorization",
-      `Bearer ${token}`,
-    );
+    headers.append("Authorization", `Bearer ${token}`);
     params.headers = headers;
     if (path.length !== 0 && !path.startsWith("/")) {
       path = `/${path}`;
@@ -120,24 +117,20 @@ export class ApiClient {
 
   private async processError(response: Response): Promise<Error> {
     let errorResponse: ScApiErrorResponse | undefined;
-    const errorResponseText: string = await response
-      .text();
+    const errorResponseText: string = await response.text();
+    console.log("errorResponseText", errorResponseText);
     try {
-      errorResponse = JSON.parse(
-        errorResponseText,
-      ) as ScApiErrorResponse;
+      errorResponse = JSON.parse(errorResponseText) as ScApiErrorResponse;
     } catch {
       // pass
     }
     // return new Error(JSON.stringify(errorResponse.errors))
     const errMsg = errorResponse
-      ? (errorResponse.errors
+      ? errorResponse.errors
         ? JSON.stringify(errorResponse.errors)
-        : JSON.stringify(errorResponse))
+        : JSON.stringify(errorResponse)
       : errorResponseText;
-    return new Error(
-      `${response.status}: ${response.statusText}: ${errMsg}`,
-    );
+    return new Error(`${response.status}: ${response.statusText}: ${errMsg}`);
   }
 
   // Unwrap JSONAPI responses
@@ -145,7 +138,7 @@ export class ApiClient {
     if (response.ok) {
       // const contentType = response.headers.get("Content-Type")?.toLowerCase();
       // TODO: assert: (contentType === "application/json" || contentType === "application/vnd.api+json") {
-      const t = await response.json() as { data: T };
+      const t = (await response.json()) as { data: T };
       return t.data;
     } else {
       throw await this.processError(response);
@@ -198,8 +191,8 @@ export class ApiClient {
     let latest: RunEntry | undefined;
     for await (const run of await this.runs(filter)) {
       if (
-        !latest || (latest.open_time && run.open_time &&
-          (latest.open_time < run.open_time))
+        !latest ||
+        (latest.open_time && run.open_time && latest.open_time < run.open_time)
       ) {
         latest = run;
       }
@@ -229,7 +222,7 @@ export class ApiClient {
     let run = await this.run(runId);
     while (run.open) {
       run = await this.run(runId);
-      await (new Promise((resolve) => setTimeout(resolve, 2 * 1000)));
+      await new Promise((resolve) => setTimeout(resolve, 2 * 1000));
     }
     return !run.open;
   }
@@ -290,7 +283,7 @@ export class ApiClient {
     location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<Response> {
-    return (await this._file(runId, location, "err", opts));
+    return await this._file(runId, location, "err", opts);
   }
 
   public async inputText(
@@ -313,7 +306,30 @@ export class ApiClient {
     location: "storage" | "running",
     opts?: { range?: string },
   ): Promise<Response> {
-    return (await this._file(runId, location, "input", opts));
+    return await this._file(runId, location, "input", opts);
+  }
+
+  public async outputText(
+    runId: RunId,
+    location: "storage" | "running",
+    opts?: { range?: string },
+  ): Promise<string> {
+    return (await this._output(runId, location, opts)).text();
+  }
+
+  public async output(
+    runId: RunId,
+    location: "storage" | "running",
+    opts?: { range?: string },
+  ): Promise<Blob> {
+    return (await this._output(runId, location, opts)).blob();
+  }
+  public async _output(
+    runId: RunId,
+    location: "storage" | "running",
+    opts?: { range?: string },
+  ): Promise<Response> {
+    return await this._file(runId, location, "out", opts);
   }
 
   public async _file(
@@ -339,11 +355,12 @@ export class ApiClient {
     return this.processResponseBody(resp);
   }
 
-  public async memLog(runId: RunId): Promise<DataVector<Date, number>> {
+  public async memLog(runId: RunId): Promise<DataVector<Date, number> | null> {
     const path = `/runs/${runId}/log/mem`;
     const resp = await this.request(path);
-    const vector: DataVector<Date, number> = await this
+    const vector: DataVector<Date, number> | null = await this
       .processResponseJsonApi(resp);
+    if (!vector) return null;
     vector.values = vector.values.map((p) => ({
       x: new Date(p.x),
       y: p.y,
@@ -351,11 +368,12 @@ export class ApiClient {
     return vector;
   }
 
-  public async cpuLog(runId: RunId): Promise<DataVector<Date, number>> {
+  public async cpuLog(runId: RunId): Promise<DataVector<Date, number> | null> {
     const path = `/runs/${runId}/log/cpu`;
     const resp = await this.request(path);
-    const vector: DataVector<Date, number> = await this
+    const vector: DataVector<Date, number> | null = await this
       .processResponseJsonApi(resp);
+    if (!vector) return null;
     vector.values = vector.values.map((p) => ({
       x: new Date(p.x),
       y: p.y,
@@ -363,11 +381,12 @@ export class ApiClient {
     return vector;
   }
 
-  public async diskLog(runId: RunId): Promise<DataVector<Date, number>> {
+  public async diskLog(runId: RunId): Promise<DataVector<Date, number> | null> {
     const path = `/runs/${runId}/log/disk`;
     const resp = await this.request(path);
-    const vector: DataVector<Date, number> = await this
+    const vector: DataVector<Date, number> | null = await this
       .processResponseJsonApi(resp);
+    if (!vector) return null;
     vector.values = vector.values.map((p) => ({
       x: new Date(p.x),
       y: p.y,
@@ -393,6 +412,19 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  /**
+   * @brief Get the run data of a run.
+   *
+   * @param runId The id of the run.
+   * @param location Optional: The phase of the run. If not specified defaults
+   * to the latest phase.
+   *
+   * @returns The @see {@link RunData} of the run. If the selected phase (or no
+   * phase when phase is not specified) is not present but the run exists, null
+   * is returned.
+   *
+   * @throws If there is no such run.
+   */
   public async runData(runId: string, location?: Phase): Promise<RunData> {
     let path = `/runs/${runId}/data/run`;
     if (location) {
@@ -462,18 +494,17 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
-  public async outstandingTotal(): Promise<
-    { currency: string; total: number }
-  > {
+  public async outstandingTotal(): Promise<{
+    currency: string;
+    total: number;
+  }> {
     const path = `/orgs/${this.accountId}/billing/outstanding/total`;
     const resp = await this.request(path);
     const total = (await this.processResponseJsonApi(resp)) as [string, number];
     return { currency: total[0].toUpperCase(), total: total[1] };
   }
 
-  public async couponsTotal(): Promise<
-    { currency: string; total: number }
-  > {
+  public async couponsTotal(): Promise<{ currency: string; total: number }> {
     const path = `/orgs/${this.accountId}/billing/coupons`;
     const resp = await this.request(path);
     const total = (await this.processResponseJsonApi(resp)) as [string, number];
@@ -517,7 +548,7 @@ class Follower implements AsyncIterable<Uint8Array> {
   async *[Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array> {
     while (!this.closed) {
       // TODO: would be better to get the --follow option working on the server
-      await (new Promise((resolve) => setTimeout(resolve, 2 * 1000)));
+      await new Promise((resolve) => setTimeout(resolve, 2 * 1000));
       const run = await this.client.run(this.runId);
       this.closed = !run.open;
       // TODO: the server should be able to handle this element of phase
@@ -545,10 +576,7 @@ export interface PagedResponse<T> {
 export class RunEntryIter implements AsyncIterable<RunEntry> {
   private nextUrl?: string;
   private client: ApiClient;
-  constructor(
-    client: ApiClient,
-    filter?: RunFilter & { limit?: number },
-  ) {
+  constructor(client: ApiClient, filter?: RunFilter & { limit?: number }) {
     this.client = client;
     const params = new URLSearchParams();
     if (filter?.updatedSince != undefined) {
@@ -571,8 +599,9 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
       if (this.nextUrl) {
         const resp = await this.client.request(this.nextUrl);
         if (resp.ok) {
-          const result: PagedResponse<RunEntry> = await resp
-            .json() as PagedResponse<RunEntry>;
+          const result: PagedResponse<RunEntry> =
+            (await resp.json()) as PagedResponse<RunEntry>;
+          console.log(result.links);
           for (const r of result.data) {
             yield r;
           }
@@ -603,10 +632,7 @@ export interface UploadProgressResult {
   status: UploadStatus;
 }
 
-export type UploadStatus =
-  | "running"
-  | "completed"
-  | "failed";
+export type UploadStatus = "running" | "completed" | "failed";
 
 export function toTable(runs: PublicRunningStatus[]) {
   return runs.map(toTableRun);
@@ -622,7 +648,12 @@ export function toTableRun(run: PublicRunningStatus) {
   const memory =
     run.memory?.Value !== undefined && run.memory_max?.Value !== undefined
       ? `${(run.memory.Value / 1024 / 1024 / 1024).toFixed(2)}/${
-        (run.memory_max.Value / 1024 / 1024 / 1024).toFixed(2)
+        (
+          run.memory_max.Value /
+          1024 /
+          1024 /
+          1024
+        ).toFixed(2)
       } GiB`
       : "-";
   return {

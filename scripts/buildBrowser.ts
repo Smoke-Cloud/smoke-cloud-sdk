@@ -1,10 +1,11 @@
-import { bundle } from "jsr:@deno/emit";
+// deno-lint-ignore no-import-prefix
+import { bundle } from "jsr:@deno/emit@0.46.0";
 {
   const url = new URL("../src/api.ts", import.meta.url);
   const result = await bundle(url, {
     importMap: {
       imports: {
-        "jose": "https://esm.sh/jose@5.2.0",
+        jose: "https://esm.sh/jose@5.2.0",
         "@microsoft/microsoft-graph-client":
           "https://cdn.jsdelivr.net/npm/@microsoft/microsoft-graph-client/lib/graph-js-sdk.js",
         "@azure/msal-browser": "https://esm.sh/@azure/msal-browser",

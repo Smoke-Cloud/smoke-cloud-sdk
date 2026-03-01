@@ -47,7 +47,7 @@ export class MsalBrowserAuthProvider {
     } else {
       const loginRequest = {
         scopes: SCOPES,
-        "prompt": "select_account",
+        prompt: "select_account",
       };
       console.log(loginRequest);
       await this.msalInstance.acquireTokenRedirect(loginRequest);
@@ -57,20 +57,21 @@ export class MsalBrowserAuthProvider {
   async org(): Promise<UserOrgInfo | undefined> {
     const graphClient = getGraphClient(await this.acquireToken());
     const user = await graphClient.api("/me").get();
-    const org = (await graphClient.api("/organization?$select=displayName,id")
-      .get()).value[0];
+    const org = (
+      await graphClient.api("/organization?$select=displayName,id").get()
+    ).value[0];
     let logoDataUrl: string | ArrayBuffer | null | undefined;
     try {
-      const squareLogo = await graphClient.api(
-        `/organization/${org.id}/branding/localizations/default/squareLogo`,
-      ).get();
-      logoDataUrl = await new Promise(
-        (resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(squareLogo);
-        },
-      );
+      const squareLogo = await graphClient
+        .api(
+          `/organization/${org.id}/branding/localizations/default/squareLogo`,
+        )
+        .get();
+      logoDataUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(squareLogo);
+      });
     } catch (_e) {
       console.warn(`no logo for organization ${org.displayName} (${org.id})`);
     }
@@ -106,20 +107,20 @@ async function hmac(key: CryptoKey, data: BufferSource) {
   return new Uint8Array(signature);
 }
 
-function base64ToBytes(base64: string): Uint8Array {
+function base64ToBytes(base64: string): Uint8Array<ArrayBuffer> {
   const binString = atob(base64);
   return Uint8Array.from(binString, (m) => m.charCodeAt(0));
 }
 
-function bytesToBase64(bytes: Uint8Array): string {
+function bytesToBase64(bytes: Uint8Array<ArrayBuffer>): string {
   const binString = String.fromCodePoint(...bytes);
   return btoa(binString);
 }
 
 export class KeyAuthProvider {
   private idKeyString: string;
-  private idKeyBytes: Uint8Array;
-  private secretKeyS: Uint8Array;
+  private idKeyBytes: Uint8Array<ArrayBuffer>;
+  private secretKeyS: Uint8Array<ArrayBuffer>;
   private secretKey?: CryptoKey;
   private hmacDigest?: string;
   #token?: string;
@@ -198,7 +199,7 @@ export class PasswordAuthProvider {
       console.error(msg);
       throw new Error("Authorisation failed.");
     }
-    const r = await response.json() as { jwt: string };
+    const r = (await response.json()) as { jwt: string };
     this.#passwordToken = `pwd:${r.jwt}`;
     return response;
   }

@@ -82,6 +82,7 @@ export interface RunEntry {
   run_id: RunId;
   sim_id: { account_id: AccountId; chid: string };
   open_time?: string;
+  archived?: string;
   update_time?: string;
   username?: string;
   project_number?: string;
@@ -193,10 +194,7 @@ export function coresToInstance(nCores: NCores): InstanceType {
   }
 }
 
-export type Phase =
-  | "staging"
-  | "storage"
-  | "running";
+export type Phase = "staging" | "storage" | "running";
 
 export interface User {
   Sc?: {

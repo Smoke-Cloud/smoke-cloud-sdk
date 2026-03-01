@@ -9,15 +9,6 @@
     "build-npm": "deno run -A scripts/buildNpm.ts",
     "build-browser": "deno run -A scripts/buildBrowser.ts"
   },
-  "fmt": {
-    "exclude": [
-      "npm/"
-    ]
-  },
-  "lint": {
-    "exclude": [
-      "npm/"
-    ]
-  },
+  "exclude": ["npm/"],
   "main": "./src/api.ts"
 }

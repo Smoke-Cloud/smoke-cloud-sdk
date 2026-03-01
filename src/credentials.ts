@@ -60,6 +60,9 @@ export class CredentialSet {
     }
     this.#userOrgInfo = creds.userOrgInfo;
   }
+  get userOrgInfo(): UserOrgInfo | undefined {
+    return this.#userOrgInfo;
+  }
   get credentials(): LoginData {
     return this.#credentials;
   }
