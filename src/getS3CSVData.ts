@@ -39,8 +39,8 @@ export function csvArrToVecs(
       x: number;
       y: number;
     } = {
-      "x": parseFloat(arr[i][timeIndex]),
-      "y": parseFloat(arr[i][valueIndex]),
+      x: parseFloat(arr[i][timeIndex]),
+      y: parseFloat(arr[i][valueIndex]),
     };
     values.push(val);
   }
@@ -62,14 +62,16 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
 
   // Create a regular expression to parse the CSV values.
   const objPattern = new RegExp(
-    (
-      // Delimiters.
-      "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+    // Delimiters.
+    "(\\" +
+      strDelimiter +
+      "|\\r?\\n|\\r|^)" +
       // Quoted fields.
       '(?:"([^"]*(?:""[^"]*)*)"|' +
       // Standard fields.
-      '([^"\\' + strDelimiter + "\\r\\n]*))"
-    ),
+      '([^"\\' +
+      strDelimiter +
+      "\\r\\n]*))",
     "gi",
   );
 
@@ -93,10 +95,7 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
     // (is not the start of string) and if it matches
     // field delimiter. If id does not, then we know
     // that this delimiter is a row delimiter.
-    if (
-      strMatchedDelimiter.length &&
-      strMatchedDelimiter !== strDelimiter
-    ) {
+    if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) {
       // Since we have reached a new row of data,
       // add an empty row to our data array.
       arrData.push([]);
@@ -110,10 +109,7 @@ export function csvToArray(strData: string, strDelimiter: string): string[][] {
     if (arrMatches[2]) {
       // We found a quoted value. When we capture
       // this value, unescape any double quotes.
-      strMatchedValue = arrMatches[2].replace(
-        new RegExp('""', "g"),
-        '"',
-      );
+      strMatchedValue = arrMatches[2].replace(new RegExp('""', "g"), '"');
     } else {
       // We found a non-quoted value.
       strMatchedValue = arrMatches[3];

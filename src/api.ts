@@ -46,8 +46,8 @@ export interface RunFilter {
 }
 
 export class ApiClient {
-  public api_endpoint = new URL("https://api.smokecloud.io/v3");
-  public storage_endpoint = new URL("https://store01.smokecloud.io/v3");
+  public api_endpoint: URL = new URL("https://api.smokecloud.io/v3");
+  public storage_endpoint: URL = new URL("https://store01.smokecloud.io/v3");
   public accountId?: string;
   private initialized: boolean = false;
   private authProvider: AuthProvider;
@@ -526,11 +526,11 @@ export class ApiClient {
     // return ReadableStream.from(follower);
     return readableStreamFromAsyncIterator(follower[Symbol.asyncIterator]());
   }
-  async stop(runId: string) {
+  async stop(runId: string): Promise<string> {
     const resp = await this.request(`/runs/${runId}/stop`, { method: "PUT" });
     return this.processResponseText(resp);
   }
-  async kill(runId: string) {
+  async kill(runId: string): Promise<string> {
     const resp = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
     return this.processResponseText(resp);
   }
@@ -634,11 +634,25 @@ export interface UploadProgressResult {
 
 export type UploadStatus = "running" | "completed" | "failed";
 
-export function toTable(runs: PublicRunningStatus[]) {
+export function toTable(runs: PublicRunningStatus[]): {
+  run_id: string;
+  account_id: string;
+  chid: string;
+  cpu: string;
+  memory: string;
+  runRate: string;
+}[] {
   return runs.map(toTableRun);
 }
 
-export function toTableRun(run: PublicRunningStatus) {
+export function toTableRun(run: PublicRunningStatus): {
+  run_id: string;
+  account_id: string;
+  chid: string;
+  cpu: string;
+  memory: string;
+  runRate: string;
+} {
   const runRate = run.run_rate !== undefined
     ? `${(run.run_rate * 60 * 60 * 24).toFixed(2)} s/day`
     : "-";

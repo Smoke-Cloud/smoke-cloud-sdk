@@ -1,5 +1,10 @@
 import * as jose from "jose";
-import type { LoginData, LoginFailure, LoginSuccess } from "./coreTypes.ts";
+import type {
+  LoginData,
+  LoginFailure,
+  LoginSuccess,
+  TokenResponse,
+} from "./coreTypes.ts";
 import {
   type AuthProviderCallback as MsalGraphAuthProviderCallback,
   Client,
@@ -20,10 +25,13 @@ export interface UserOrgInfo {
 }
 
 export type CliContext = CliContextMs | CliContextKeys;
-export type CliContextMs = BaseCliContext & Tokens & {
-  received: number;
-  id_key: undefined;
-};
+export type CliContextMs =
+  & BaseCliContext
+  & Tokens
+  & {
+    received: number;
+    id_key: undefined;
+  };
 export type CliContextKeys = BaseCliContext & {
   id_key: string;
   secret_key: string;
@@ -66,7 +74,22 @@ export class CredentialSet {
   get credentials(): LoginData {
     return this.#credentials;
   }
-  get passCredentials() {
+  get passCredentials():
+    | {
+      tokens: TokenResponse;
+      received: number;
+      accountId: string;
+    }
+    | {
+      idKey: string;
+      secretKey: string;
+      accountId: string;
+    }
+    | {
+      accountId: string;
+      username: string;
+      password: string;
+    } {
     switch (this.#credentials.type) {
       case "microsoft":
         return {
@@ -91,7 +114,7 @@ export class CredentialSet {
         throw new Error("unrecognised creds type");
     }
   }
-  get type() {
+  get type(): "microsoft" | "keys" | "password" {
     return this.#credentials.type;
   }
   get id(): string {
@@ -123,7 +146,7 @@ export class CredentialSet {
   get remaining(): number | undefined {
     if (this.#credentials.type === "microsoft") {
       // check if we need to reauthorize
-      const now = Math.floor((new Date()).getTime() / 1000);
+      const now = Math.floor(new Date().getTime() / 1000);
       const expires = this.#credentials.received +
         this.#credentials.tokens.expires_in;
       const remaining = expires - now;
@@ -135,12 +158,12 @@ export class CredentialSet {
   setUserOrgInfo(userOrgInfo: UserOrgInfo) {
     this.#userOrgInfo = userOrgInfo;
   }
-  getUserOrgInfo() {
+  getUserOrgInfo(): UserOrgInfo | undefined {
     return this.#userOrgInfo;
   }
 }
 
-export function getGraphClient(accessToken: string) {
+export function getGraphClient(accessToken: string): Client {
   // Initialize Graph client
   const graphClient = Client.init({
     // Use the provided access token to authenticate requests
