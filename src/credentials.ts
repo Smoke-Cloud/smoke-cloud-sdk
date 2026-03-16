@@ -53,6 +53,26 @@ export type Tokens = {
   token_type: string;
 };
 
+export type PassCreds =
+  | {
+    type: "microsoft";
+    tokens: TokenResponse;
+    received: number;
+    accountId: string;
+  }
+  | {
+    type: "keys";
+    idKey: string;
+    secretKey: string;
+    accountId: string;
+  }
+  | {
+    type: "password";
+    accountId: string;
+    username: string;
+    password: string;
+  };
+
 export class CredentialSet {
   #credentials: LoginData;
   #userOrgInfo?: UserOrgInfo;
@@ -74,25 +94,11 @@ export class CredentialSet {
   get credentials(): LoginData {
     return this.#credentials;
   }
-  get passCredentials():
-    | {
-      tokens: TokenResponse;
-      received: number;
-      accountId: string;
-    }
-    | {
-      idKey: string;
-      secretKey: string;
-      accountId: string;
-    }
-    | {
-      accountId: string;
-      username: string;
-      password: string;
-    } {
+  get passCredentials(): PassCreds {
     switch (this.#credentials.type) {
       case "microsoft":
         return {
+          type: this.#credentials.type,
           tokens: this.#credentials.tokens,
           received: this.#credentials.received,
           // TODO: should we need accountId?
@@ -100,12 +106,14 @@ export class CredentialSet {
         };
       case "keys":
         return {
+          type: this.#credentials.type,
           idKey: this.#credentials.id_key,
           secretKey: this.#credentials.secret_key,
           accountId: this.#credentials.customerid,
         };
       case "password":
         return {
+          type: this.#credentials.type,
           accountId: this.#credentials.account_id,
           username: this.#credentials.username,
           password: this.#credentials.password,
