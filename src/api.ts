@@ -11,8 +11,33 @@ import type {
   Snapshot,
   User,
 } from "./coreTypes.ts";
+export type {
+  CurrentUsage,
+  InstanceType,
+  LoginData,
+  LoginDataMs,
+  LoginDataPassword,
+  LoginResult,
+  NCores,
+  Phase,
+  PresenceProgressFull,
+  ProgressInfo,
+  PublicRunningStatus,
+  RunBilling,
+  RunEntry,
+  RunId,
+  Snapshot,
+  User,
+} from "./coreTypes.ts";
+export type {
+  GenericLoginResult,
+  PassCreds,
+  UserOrgInfo,
+} from "./credentials.ts";
+export type { AuthProvider } from "./authProviders/mod.ts";
 import { coresToInstance } from "./coreTypes.ts";
 import type { UserOrgInfo } from "./credentials.ts";
+export type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { AuthProvider } from "./authProviders/mod.ts";
 export * from "./credentials.ts";
@@ -48,9 +73,10 @@ export interface RunFilter {
 export class ApiClient {
   public api_endpoint: URL = new URL("https://api.smokecloud.io/v3");
   public storage_endpoint: URL = new URL("https://store01.smokecloud.io/v3");
-  public accountId?: string;
+  #accountId?: string;
   private initialized: boolean = false;
   private authProvider: AuthProvider;
+  private initProgress?: Promise<void>;
   constructor(
     authProvider: AuthProvider,
     options?: {
@@ -69,8 +95,16 @@ export class ApiClient {
 
   public async init() {
     await this.authProvider.init();
-    this.accountId = await this.getAccountId();
     this.initialized = true;
+  }
+
+  private async ensureInit() {
+    if (this.initProgress) {
+      return await this.initProgress;
+    } else {
+      this.initProgress = this.init();
+      await this.initProgress;
+    }
   }
 
   async request(path: string, init?: RequestInit): Promise<Response> {
@@ -163,8 +197,13 @@ export class ApiClient {
     }
   }
 
+  public async accountId(): Promise<string> {
+    return await this.getAccountId();
+  }
+
   // TODO: could we have multiple organizations?
   private async getAccountId(): Promise<string> {
+    if (this.#accountId) return this.#accountId;
     const resp = await this.request("/me", { method: "GET" });
     if (resp.ok) {
       const user = (await this.processResponseJsonApi(resp)) as {
@@ -172,6 +211,7 @@ export class ApiClient {
         username?: string;
         id?: string;
       };
+      this.#accountId = user.account_id;
       return user.account_id;
     } else {
       throw await this.processError(resp);
@@ -181,10 +221,10 @@ export class ApiClient {
   public async runs(
     filter?: RunFilter & { limit?: number },
   ): Promise<RunEntryIter> {
-    if (!this.accountId) {
+    if (!this.initialized) {
       await this.init();
     }
-    return new RunEntryIter(this, filter);
+    return new RunEntryIter(this, await this.getAccountId(), filter);
   }
 
   public async latestRun(filter?: RunFilter): Promise<RunEntry | undefined> {
@@ -201,7 +241,7 @@ export class ApiClient {
   }
 
   public async status(): Promise<PublicRunningStatus[]> {
-    const path = `/orgs/${this.accountId}/running_status`;
+    const path = `/orgs/${await this.getAccountId()}/running_status`;
     const resp = await this.request(path);
     return await this.processResponseJsonApi(resp);
   }
@@ -457,7 +497,7 @@ export class ApiClient {
     }
     params.apply_mpi_transform = true.toString();
     const queryParams = new URLSearchParams(params);
-    const path = `/orgs/${this.accountId}/runs${
+    const path = `/orgs/${await this.getAccountId()}/runs${
       queryParams.size > 0 ? `?${queryParams.toString()}` : ""
     }`;
     // Post the submission info.
@@ -482,13 +522,13 @@ export class ApiClient {
   }
 
   public async load(): Promise<CurrentUsage> {
-    const path = `/orgs/${this.accountId}/load`;
+    const path = `/orgs/${await this.getAccountId()}/load`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
 
   public async outstanding(accountIdOverride?: string): Promise<RunBilling[]> {
-    const accountId = accountIdOverride ?? this.accountId;
+    const accountId = accountIdOverride ?? await this.getAccountId();
     const path = `/orgs/${accountId}/billing/outstanding`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
@@ -498,14 +538,14 @@ export class ApiClient {
     currency: string;
     total: number;
   }> {
-    const path = `/orgs/${this.accountId}/billing/outstanding/total`;
+    const path = `/orgs/${await this.getAccountId()}/billing/outstanding/total`;
     const resp = await this.request(path);
     const total = (await this.processResponseJsonApi(resp)) as [string, number];
     return { currency: total[0].toUpperCase(), total: total[1] };
   }
 
   public async couponsTotal(): Promise<{ currency: string; total: number }> {
-    const path = `/orgs/${this.accountId}/billing/coupons`;
+    const path = `/orgs/${await this.getAccountId()}/billing/coupons`;
     const resp = await this.request(path);
     const total = (await this.processResponseJsonApi(resp)) as [string, number];
     return { currency: total[0].toUpperCase(), total: total[1] };
@@ -576,7 +616,11 @@ export interface PagedResponse<T> {
 export class RunEntryIter implements AsyncIterable<RunEntry> {
   private nextUrl?: string;
   private client: ApiClient;
-  constructor(client: ApiClient, filter?: RunFilter & { limit?: number }) {
+  constructor(
+    client: ApiClient,
+    accountId: string,
+    filter?: RunFilter & { limit?: number },
+  ) {
     this.client = client;
     const params = new URLSearchParams();
     if (filter?.updatedSince != undefined) {
@@ -589,9 +633,9 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
       params.set("limit", filter?.limit.toString());
     }
     if (params.size > 0) {
-      this.nextUrl = `/orgs/${this.client.accountId}/runs?${params.toString()}`;
+      this.nextUrl = `/orgs/${accountId}/runs?${params.toString()}`;
     } else {
-      this.nextUrl = `/orgs/${this.client.accountId}/runs`;
+      this.nextUrl = `/orgs/${accountId}/runs`;
     }
   }
   async *[Symbol.asyncIterator](): AsyncIterableIterator<RunEntry> {
