@@ -41,7 +41,7 @@ export type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { AuthProvider } from "./authProviders/mod.ts";
 import { Run } from "./runs.ts";
-export { Run } from "./runs.ts";
+export { Progress, Run } from "./runs.ts";
 export * from "./credentials.ts";
 export * from "./coreTypes.ts";
 export * from "./getS3CSVData.ts";

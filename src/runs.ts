@@ -10,6 +10,9 @@ import type { RunData } from "./getS3CSVData.ts";
 function maybeDate(date: string | undefined): Date | undefined {
   return date ? new Date(date) : undefined;
 }
+function maybeDateOut(date: Date | undefined): string | undefined {
+  return date ? date.toISOString() : undefined;
+}
 export class Run {
   public runId: RunId;
   public accountId: AccountId;
@@ -51,6 +54,24 @@ export class Run {
     this.stored = status.stored;
     this.noArchive = status.no_archive;
     this.runParams = status.run_params;
+  }
+  public runEntry(): RunEntry {
+    return {
+      run_id: this.runId,
+      sim_id: { account_id: this.accountId, chid: this.chid },
+      open_time: this.openTime.toISOString(),
+      close_time: maybeDateOut(this.closeTime),
+      archived: maybeDateOut(this.archived),
+      update_time: maybeDateOut(this.updateTime),
+      username: this.username,
+      project_number: this.project,
+      version: this.version,
+      manual_upload: this.manualUpload,
+      running: this.running,
+      stored: this.stored,
+      no_archive: this.noArchive,
+      run_params: this.runParams,
+    };
   }
 
   public get isArchived(): boolean {
