@@ -81,12 +81,12 @@ export interface PublicRunningStatus {
 export interface RunEntry {
   run_id: RunId;
   sim_id: { account_id: AccountId; chid: string };
-  open_time?: string;
+  open_time: string;
+  close_time?: string;
   archived?: string;
   update_time?: string;
   username?: string;
   project_number?: string;
-  open: boolean;
   version: number;
   manual_upload: boolean;
   running: PresenceProgress;
@@ -118,6 +118,11 @@ export interface RunBilling {
 export interface ProgressInfo {
   running: PresenceProgress;
   stored: PresenceProgress;
+}
+
+export interface RunTimes {
+  duration: number;
+  finished: boolean;
 }
 
 export type PresenceProgress =

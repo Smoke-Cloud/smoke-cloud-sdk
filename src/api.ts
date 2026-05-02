@@ -8,6 +8,7 @@ import type {
   RunBilling,
   RunEntry,
   RunId,
+  RunTimes,
   Snapshot,
   User,
 } from "./coreTypes.ts";
@@ -24,7 +25,6 @@ export type {
   ProgressInfo,
   PublicRunningStatus,
   RunBilling,
-  RunEntry,
   RunId,
   Snapshot,
   User,
@@ -40,38 +40,102 @@ import type { UserOrgInfo } from "./credentials.ts";
 export type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { AuthProvider } from "./authProviders/mod.ts";
+import { Run } from "./runs.ts";
+export { Run } from "./runs.ts";
 export * from "./credentials.ts";
 export * from "./coreTypes.ts";
 export * from "./getS3CSVData.ts";
 export * from "./authProviders/mod.ts";
 
 export class ApiError extends Error {}
-export interface ScApiErrorResponse {
-  errors: ScApiErrorObject[];
+
+export type ScApiReponse = (ScApiDataResponse | ScApiErrorResponse) & {
+  meta?: Record<string, unknown>;
+};
+
+export interface ScApiDataResponse {
+  data: object;
 }
-export interface ScApiErrorObject {
+
+export interface ScApiErrorResponse {
+  errors: ScJsonApiError[];
+}
+
+//** JSONAPI error object but with some members made compulsory */
+export interface ScJsonApiError {
+  /** a unique identifier for this particular occurrence of the problem. */
   id?: string;
-  links?: { about?: string; type?: string };
+  ///a links object that MAY contain the following members:
+  links?: {
+    /** a link that leads to further details about this particular occurrence of
+     * the problem. When dereferenced, this URI SHOULD return a human-readable
+     * description of the error. */
+    about?: string;
+    /** a link that identifies the type of error that this particular error is
+     * an instance of. This URI SHOULD be dereferenceable to a human-readable
+     * explanation of the general error. */
+    type?: string;
+  };
+  /** the HTTP status code applicable to this problem, expressed as a string
+   * value. This SHOULD be provided. */
   status?: string;
+  /** an application-specific error code, expressed as a string value. */
   code: string;
+  /** a short, human-readable summary of the problem that SHOULD NOT change from
+   * occurrence to occurrence of the problem, except for purposes of
+   * localization. */
   title?: string;
+  /** a human-readable explanation specific to this occurrence of the problem.
+   * Like title, this field’s value can be localized. */
   detail?: string;
+  /** an object containing references to the primary source of the error. It
+   * SHOULD include one of the following members or be omitted: */
   source?: {
+    /** a JSON Pointer [RFC6901] to the value in the request document that
+     * caused the error [e.g. "/data" for a primary data object, or
+     * "/data/attributes/title" for a specific attribute]. This MUST point to a
+     * value in the request document that exists; if it doesn’t, the client
+     * SHOULD simply ignore the pointer. */
     pointer?: string;
+    /** a string indicating which URI query parameter caused the error. */
     parameter?: string;
+    /** a string indicating the name of a single request header which caused the
+     * error. */
     header?: string;
   };
-  meta?: object;
+  /** a meta object containing non-standard meta-information about the error. */
+  meta?: Record<string, unknown>;
+}
+
+export function isJsonApiErrorResponse(
+  err: unknown,
+): err is ScApiErrorResponse {
+  if (err === null) return false;
+  if (typeof err !== "object") return false;
+  if (!("errors" in err)) return false;
+  if (!(err.errors instanceof Array)) return false;
+  for (const errObj of err.errors) {
+    if (!isJsonApiError(errObj)) return false;
+  }
+  return true;
+}
+
+export function isJsonApiError(err: unknown): err is ScJsonApiError {
+  if (err === null) return false;
+  if (typeof err !== "object") return false;
+  if (!("code" in err)) return false;
+  if (typeof err.code !== "string") return false;
+  return true;
 }
 
 export interface RunFilter {
-  /// unix time in milliseconds
+  /** unix time in milliseconds */
   updatedSince?: number;
   chid?: string;
 }
 
 export class ApiClient {
-  public api_endpoint: URL = new URL("https://api.smokecloud.io/v3");
+  public api_endpoint: URL = new URL("https://api.smokecloud.io/v5");
   public storage_endpoint: URL = new URL("https://store01.smokecloud.io/v3");
   #accountId?: string;
   private initialized: boolean = false;
@@ -152,19 +216,25 @@ export class ApiClient {
   private async processError(response: Response): Promise<Error> {
     let errorResponse: ScApiErrorResponse | undefined;
     const errorResponseText: string = await response.text();
-    console.log("errorResponseText", errorResponseText);
     try {
-      errorResponse = JSON.parse(errorResponseText) as ScApiErrorResponse;
+      errorResponse = JSON.parse(errorResponseText);
+      if (isJsonApiErrorResponse(errorResponse)) {
+        return new Error(errorResponse.errors.at(0)?.code ?? "UnknownError", {
+          cause: errorResponse,
+        });
+      } else {
+        return new Error(
+          `${response.status}: ${response.statusText}: ${errorResponse}`,
+        );
+      }
     } catch {
-      // pass
+      const errMsg = errorResponse
+        ? errorResponse.errors
+          ? JSON.stringify(errorResponse.errors)
+          : JSON.stringify(errorResponse)
+        : errorResponseText;
+      return new Error(`${response.status}: ${response.statusText}: ${errMsg}`);
     }
-    // return new Error(JSON.stringify(errorResponse.errors))
-    const errMsg = errorResponse
-      ? errorResponse.errors
-        ? JSON.stringify(errorResponse.errors)
-        : JSON.stringify(errorResponse)
-      : errorResponseText;
-    return new Error(`${response.status}: ${response.statusText}: ${errMsg}`);
   }
 
   // Unwrap JSONAPI responses
@@ -227,12 +297,12 @@ export class ApiClient {
     return new RunEntryIter(this, await this.getAccountId(), filter);
   }
 
-  public async latestRun(filter?: RunFilter): Promise<RunEntry | undefined> {
-    let latest: RunEntry | undefined;
+  public async latestRun(filter?: RunFilter): Promise<Run | undefined> {
+    let latest: Run | undefined;
     for await (const run of await this.runs(filter)) {
       if (
         !latest ||
-        (latest.open_time && run.open_time && latest.open_time < run.open_time)
+        (latest.openTime && run.openTime && latest.openTime < run.openTime)
       ) {
         latest = run;
       }
@@ -252,6 +322,12 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  public async times(runId: RunId): Promise<RunTimes> {
+    const path = `/runs/${runId}/times`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
     const resp = await this.request(path);
@@ -259,12 +335,21 @@ export class ApiClient {
   }
 
   public async confirmClosed(runId: RunId): Promise<boolean> {
-    let run = await this.run(runId);
-    while (run.open) {
-      run = await this.run(runId);
-      await new Promise((resolve) => setTimeout(resolve, 2 * 1000));
+    let open = true;
+    let nErrors = 0;
+    while (open) {
+      try {
+        const run = await this.run(runId);
+        open = !run.close_time;
+        await new Promise((resolve) => setTimeout(resolve, 20 * 1000));
+      } catch (e) {
+        nErrors++;
+        if (nErrors > 50) {
+          throw e;
+        }
+      }
     }
-    return !run.open;
+    return !open;
   }
 
   public async snapshots(runId: RunId): Promise<Snapshot[]> {
@@ -590,7 +675,7 @@ class Follower implements AsyncIterable<Uint8Array> {
       // TODO: would be better to get the --follow option working on the server
       await new Promise((resolve) => setTimeout(resolve, 2 * 1000));
       const run = await this.client.run(this.runId);
-      this.closed = !run.open;
+      this.closed = Boolean(run.close_time);
       // TODO: the server should be able to handle this element of phase
       const phase = closed ? "storage" : "running";
       const s = await this.client.err(this.runId, phase, {
@@ -613,7 +698,7 @@ export interface PagedResponse<T> {
 }
 
 // TODO: add support for more filter options
-export class RunEntryIter implements AsyncIterable<RunEntry> {
+export class RunEntryIter implements AsyncIterable<Run> {
   private nextUrl?: string;
   private client: ApiClient;
   constructor(
@@ -638,7 +723,7 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
       this.nextUrl = `/orgs/${accountId}/runs`;
     }
   }
-  async *[Symbol.asyncIterator](): AsyncIterableIterator<RunEntry> {
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<Run> {
     while (1) {
       if (this.nextUrl) {
         const resp = await this.client.request(this.nextUrl);
@@ -647,7 +732,7 @@ export class RunEntryIter implements AsyncIterable<RunEntry> {
             (await resp.json()) as PagedResponse<RunEntry>;
           console.log(result.links);
           for (const r of result.data) {
-            yield r;
+            yield new Run(r);
           }
           if (result.links?.next) {
             this.nextUrl = result.links.next;
