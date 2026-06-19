@@ -1,3 +1,8 @@
+/**
+ * SDK for access to the Smoke Cloud simulation and modelling platform.
+ * @module smokecloud
+ */
+
 export type {
   CurrentUsage,
   InstanceType,
