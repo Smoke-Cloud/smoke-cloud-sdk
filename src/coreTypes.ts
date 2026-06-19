@@ -92,6 +92,8 @@ export type PresenceProgress =
   | PresenceProgressEmpty
   | PresenceProgressNone;
 
+/** Convert a complex {@link PresenceProgress} to a more basic representation
+ * of the current progress of a model. */
 export function toSimpleProgress(
   progress: PresenceProgress,
 ): { current: number; total: number } | undefined {
@@ -134,6 +136,7 @@ export interface ModelSummary {
   runs: RunEntry[];
 }
 
+/** The available instance names. */
 export type InstanceType =
   | "Cores1"
   | "Cores2"
@@ -142,8 +145,10 @@ export type InstanceType =
   | "Cores16"
   | "Cores32";
 
+/** The available core configurations. */
 export type NCores = 1 | 2 | 4 | 8 | 16 | 32;
 
+/** Convert a number of cores to an instance name. */
 export function coresToInstance(nCores: NCores): InstanceType {
   switch (nCores) {
     case 1:
@@ -161,8 +166,10 @@ export function coresToInstance(nCores: NCores): InstanceType {
   }
 }
 
+/** The different phases of a run. */
 export type Phase = "staging" | "storage" | "running";
 
+/** Information on a user. */
 export interface UserInfo {
   id: string;
   name: string;
@@ -170,12 +177,14 @@ export interface UserInfo {
   org: OrgInfo;
 }
 
+/** Information on an organization */
 export interface OrgInfo {
   id: string;
   name: string;
   account_id: string;
 }
 
+/** Urls to the logos associated with an organization. */
 export interface OrgLogos {
   light_url?: string;
   dark_url?: string;

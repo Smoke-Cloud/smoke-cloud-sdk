@@ -1,5 +1,17 @@
 /**
  * SDK for access to the Smoke Cloud simulation and modelling platform.
+ *
+ * @example
+ * ```ts
+ * import { search } from "@luca/search";
+ *
+ * const client: ApiClient = new ApiClient(auth);
+ * await client.init();
+ * for await (const run of await client.runs()) {
+ *    console.log(run);
+ * }
+ * ```
+ *
  * @module smokecloud
  */
 

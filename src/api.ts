@@ -66,6 +66,7 @@ export class ApiClient {
     }
   }
 
+  /** Initialize the API client. */
   public async init() {
     await this.authProvider?.init();
     this.initialized = true;
@@ -79,7 +80,7 @@ export class ApiClient {
     }
   }
 
-  async request(path: string, init?: RequestInit): Promise<Response> {
+  public async request(path: string, init?: RequestInit): Promise<Response> {
     const token = await this.authProvider?.acquireToken();
     const params = init ? init : {};
     const headers: Headers = new Headers(init?.headers);
@@ -105,7 +106,10 @@ export class ApiClient {
     }
   }
 
-  async requestStorage(path: string, init?: RequestInit): Promise<Response> {
+  private async requestStorage(
+    path: string,
+    init?: RequestInit,
+  ): Promise<Response> {
     const token = await this.authProvider?.acquireToken();
     const params = init ? init : {};
     const headers: Headers = new Headers(init?.headers);
@@ -182,10 +186,6 @@ export class ApiClient {
     }
   }
 
-  public async accountId(): Promise<string> {
-    return await this.getAccountId();
-  }
-
   // TODO: could we have multiple organizations?
   private async getAccountId(): Promise<string> {
     if (this.#accountId) return this.#accountId;
@@ -203,6 +203,12 @@ export class ApiClient {
     }
   }
 
+  /** Get the account id associated with the current user. */
+  public async accountId(): Promise<string> {
+    return await this.getAccountId();
+  }
+
+  /** Iterate through runs with an optional filter. */
   public async runs(
     filter?: RunFilter & { limit?: number },
   ): Promise<RunEntryIter> {
@@ -212,6 +218,7 @@ export class ApiClient {
     return new RunEntryIter(this, await this.getAccountId(), filter);
   }
 
+  /** Get the single latest run, optionally given a filter. */
   public async latestRun(filter?: RunFilter): Promise<Run | undefined> {
     let latest: Run | undefined;
     for await (const run of await this.runs(filter)) {
@@ -225,30 +232,38 @@ export class ApiClient {
     return latest;
   }
 
+  /** Get the status of all running simulations. */
   public async status(): Promise<PublicRunningStatus[]> {
     const path = `/orgs/${await this.getAccountId()}/running_status`;
     const resp = await this.request(path);
     return await this.processResponseJsonApi(resp);
   }
 
+  /** Get key information about a run. */
   public async run(runId: RunId): Promise<RunEntry> {
     const path = `/runs/${runId}`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
 
+  /** Get how long a simulation either has been running or how long it took to
+   * run. */
   public async times(runId: RunId): Promise<RunTimes> {
     const path = `/runs/${runId}/times`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
 
+  /** Get the current progress of a simulation. */
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
 
+  /** Confirm that a simulation has 'closed', i.e., the simulation and any
+   * associated cleanup has been completed. This won't return until the it is
+   * confirmed that the simulation is closed. */
   public async confirmClosed(runId: RunId): Promise<boolean> {
     let open = true;
     let nErrors = 0;
@@ -267,12 +282,14 @@ export class ApiClient {
     return !open;
   }
 
+  /** List the available snapshots associated with a simulation. */
   public async snapshots(runId: RunId): Promise<Snapshot[]> {
     const path = `/runs/${runId}/snapshots`;
     const resp = await this.requestStorage(path);
     return resp.json();
   }
 
+  /** Get hte latest snapshot associated with a simulation. */
   public async latestSnapshot(runId: RunId): Promise<Snapshot | undefined> {
     const snapshots = await this.snapshots(runId);
     let latest: Snapshot | undefined;
