@@ -1,5 +1,6 @@
 {
   "name": "@smoke-cloud/sdk",
+  "version": "0.1.0",
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.19"
   },
