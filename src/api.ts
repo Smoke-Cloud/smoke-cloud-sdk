@@ -32,6 +32,7 @@ import type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { AuthProvider } from "./authProviders/mod.ts";
 import { Run } from "./runs.ts";
 import { isJsonApiErrorResponse, type ScApiErrorResponse } from "./utils.ts";
+export { isJsonApiErrorResponse, type ScApiErrorResponse } from "./utils.ts";
 export { Progress, Run } from "./runs.ts";
 export * from "./coreTypes.ts";
 export * from "./getS3CSVData.ts";
@@ -335,7 +336,7 @@ export class ApiClient {
   ): Promise<Blob> {
     return (await this._err(runId, location, opts)).blob();
   }
-  public async _err(
+  private async _err(
     runId: RunId,
     location: "storage" | "running",
     opts?: { range?: string },
@@ -358,7 +359,7 @@ export class ApiClient {
   ): Promise<Blob> {
     return (await this._input(runId, location, opts)).blob();
   }
-  public async _input(
+  private async _input(
     runId: RunId,
     location: "storage" | "running",
     opts?: { range?: string },
@@ -381,7 +382,7 @@ export class ApiClient {
   ): Promise<Blob> {
     return (await this._output(runId, location, opts)).blob();
   }
-  public async _output(
+  private async _output(
     runId: RunId,
     location: "storage" | "running",
     opts?: { range?: string },
@@ -389,7 +390,7 @@ export class ApiClient {
     return await this._file(runId, location, "out", opts);
   }
 
-  public async _file(
+  private async _file(
     runId: RunId,
     location: "storage" | "running",
     file: string,
@@ -578,7 +579,8 @@ export class ApiClient {
     const resp = await this.request("/me/logos");
     return this.processResponseJsonApi(resp);
   }
-  follow(runId: string): ReadableStream<Uint8Array> {
+
+  public follow(runId: string): ReadableStream<Uint8Array> {
     const follower = new Follower(this, runId);
     // Feature test as ReadableStream.from is not currently available on all
     // platforms
@@ -588,11 +590,13 @@ export class ApiClient {
       return readableStreamFromAsyncIterator(follower[Symbol.asyncIterator]());
     }
   }
-  async stop(runId: string): Promise<string> {
+
+  public async stop(runId: string): Promise<string> {
     const resp = await this.request(`/runs/${runId}/stop`, { method: "PUT" });
     return this.processResponseText(resp);
   }
-  async kill(runId: string): Promise<string> {
+
+  public async kill(runId: string): Promise<string> {
     const resp = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
     return this.processResponseText(resp);
   }
@@ -713,6 +717,7 @@ function readableStreamFromAsyncIterator<T>(
   });
 }
 
+/** Available FDS versions that Smoke Cloud will accept. */
 export const fdsVersions = [
   "5.5.3",
   "6.1.2",
