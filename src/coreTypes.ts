@@ -189,3 +189,28 @@ export interface OrgLogos {
   light_url?: string;
   dark_url?: string;
 }
+
+export type Uuid = string;
+
+export interface FullDistribution {
+  key: string;
+  name: string;
+  org_id: string;
+  project: string | null;
+  models: DistributionModel[];
+}
+
+export interface DistributionModel {
+  chid: string;
+  description: string;
+  model_index: number;
+  size: number | null;
+}
+
+export interface ProjectEntry {
+  id: Uuid;
+  number: string;
+  title?: string | null;
+  soft_limit?: [string, number] | null;
+  hard_limit?: [string, number] | null;
+}

@@ -13,6 +13,7 @@ function maybeDate(date: string | undefined): Date | undefined {
 function maybeDateOut(date: Date | undefined): string | undefined {
   return date ? date.toISOString() : undefined;
 }
+
 export class Run {
   public runId: RunId;
   public accountId: AccountId;

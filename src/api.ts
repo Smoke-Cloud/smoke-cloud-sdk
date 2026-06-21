@@ -1,10 +1,12 @@
 import type {
   CurrentUsage,
+  FullDistribution,
   InstanceType,
   NCores,
   OrgLogos,
   Phase,
   ProgressInfo,
+  ProjectEntry,
   PublicRunningStatus,
   RunBilling,
   RunEntry,
@@ -32,6 +34,8 @@ import type { DataVector, RunData } from "./getS3CSVData.ts";
 import type { AuthProvider } from "./authProviders/mod.ts";
 import { Run } from "./runs.ts";
 import { isJsonApiErrorResponse, type ScApiErrorResponse } from "./utils.ts";
+import { Project } from "./projects.ts";
+import { Distribution } from "./distributions.ts";
 export { isJsonApiErrorResponse, type ScApiErrorResponse } from "./utils.ts";
 export { Progress, Run } from "./runs.ts";
 export * from "./coreTypes.ts";
@@ -192,13 +196,26 @@ export class ApiClient {
     if (this.#accountId) return this.#accountId;
     const resp = await this.request("/me", { method: "GET" });
     if (resp.ok) {
-      const user = (await this.processResponseJsonApi(resp)) as {
-        account_id: string;
-        username?: string;
-        id?: string;
-      };
-      this.#accountId = user.account_id;
-      return user.account_id;
+      const user = await this.processResponseJsonApi(resp);
+      if (
+        typeof user === "object" && user && "account_id" in user &&
+        typeof user.account_id === "string"
+      ) {
+        this.#accountId = user.account_id;
+      } else if (
+        typeof user === "object" && user && "org" in user &&
+        typeof user.org === "object" && user.org && "account_id" in user.org &&
+        typeof user.org.account_id === "string"
+      ) {
+        this.#accountId = user.org.account_id;
+      } else {
+        throw new Error("no account id");
+      }
+      if (!this.#accountId) {
+        console.warn(user);
+        throw new Error("no account id");
+      }
+      return this.#accountId;
     } else {
       throw await this.processError(resp);
     }
@@ -217,6 +234,26 @@ export class ApiClient {
       await this.init();
     }
     return new RunEntryIter(this, await this.getAccountId(), filter);
+  }
+
+  /** Iterate through projects with an optional filter. */
+  public async projects(
+    // filter?: ProjectFilter & { limit?: number },
+  ): Promise<ProjectEntryIter> {
+    if (!this.initialized) {
+      await this.init();
+    }
+    return new ProjectEntryIter(this, await this.getAccountId());
+  }
+
+  /** Iterate through distributions with an optional filter. */
+  public async distributions(
+    // filter?: DistributionFilter & { limit?: number },
+  ): Promise<DistributionsIter> {
+    if (!this.initialized) {
+      await this.init();
+    }
+    return new DistributionsIter(this, await this.getAccountId());
   }
 
   /** Get the single latest run, optionally given a filter. */
@@ -575,7 +612,7 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
-  public async org(): Promise<OrgLogos | undefined> {
+  public async orgLogos(): Promise<OrgLogos | undefined> {
     const resp = await this.request("/me/logos");
     return this.processResponseJsonApi(resp);
   }
@@ -674,6 +711,115 @@ export class RunEntryIter implements AsyncIterable<Run> {
           console.log(result.links);
           for (const r of result.data) {
             yield new Run(r);
+          }
+          if (result.links?.next) {
+            this.nextUrl = result.links.next;
+          } else {
+            break;
+          }
+        } else {
+          const err = await resp.json();
+          throw new Error(err);
+        }
+      }
+    }
+  }
+}
+
+// export interface ProjectFilter {
+
+// }
+
+export class ProjectEntryIter implements AsyncIterable<Project> {
+  private nextUrl?: string;
+  private client: ApiClient;
+  constructor(
+    client: ApiClient,
+    accountId: string,
+    // filter?: ProjectFilter & { limit?: number },
+  ) {
+    this.client = client;
+    const params = new URLSearchParams();
+    // if (filter?.updatedSince != undefined) {
+    //   params.set("from_time", filter?.updatedSince.toString());
+    // }
+    // if (filter?.chid) {
+    //   params.set("chid", filter?.chid);
+    // }
+    // if (filter?.limit != undefined) {
+    //   params.set("limit", filter?.limit.toString());
+    // }
+    if (params.size > 0) {
+      this.nextUrl = `/orgs/${accountId}/project_details?${params.toString()}`;
+    } else {
+      this.nextUrl = `/orgs/${accountId}/project_details`;
+    }
+  }
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<Project> {
+    while (1) {
+      if (this.nextUrl) {
+        const resp = await this.client.request(this.nextUrl);
+        if (resp.ok) {
+          const result: PagedResponse<ProjectEntry> =
+            (await resp.json()) as PagedResponse<ProjectEntry>;
+          console.log(result.links);
+          for (const r of result.data) {
+            yield new Project(r);
+          }
+          if (result.links?.next) {
+            this.nextUrl = result.links.next;
+          } else {
+            break;
+          }
+        } else {
+          const err = await resp.json();
+          throw new Error(err);
+        }
+      }
+    }
+  }
+}
+
+// export interface DistributionFilter {
+// }
+
+export class DistributionsIter implements AsyncIterable<Distribution> {
+  private nextUrl?: string;
+  private client: ApiClient;
+  private accountId: string;
+  constructor(
+    client: ApiClient,
+    accountId: string,
+    // filter?: DistributionFilter & { limit?: number },
+  ) {
+    this.client = client;
+    this.accountId = accountId;
+    const params = new URLSearchParams();
+    // if (filter?.updatedSince != undefined) {
+    //   params.set("from_time", filter?.updatedSince.toString());
+    // }
+    // if (filter?.chid) {
+    //   params.set("chid", filter?.chid);
+    // }
+    // if (filter?.limit != undefined) {
+    //   params.set("limit", filter?.limit.toString());
+    // }
+    if (params.size > 0) {
+      this.nextUrl = `/orgs/${accountId}/distributions?${params.toString()}`;
+    } else {
+      this.nextUrl = `/orgs/${accountId}/distributions`;
+    }
+  }
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<Distribution> {
+    while (1) {
+      if (this.nextUrl) {
+        const resp = await this.client.request(this.nextUrl);
+        if (resp.ok) {
+          const result: PagedResponse<FullDistribution> =
+            (await resp.json()) as PagedResponse<FullDistribution>;
+          console.log(result.links);
+          for (const r of result.data) {
+            yield new Distribution(this.accountId, r);
           }
           if (result.links?.next) {
             this.nextUrl = result.links.next;

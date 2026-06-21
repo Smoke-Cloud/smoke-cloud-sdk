@@ -34,3 +34,5 @@ export * from "./coreTypes.ts";
 export * from "./getS3CSVData.ts";
 export * from "./authProviders/mod.ts";
 export * from "./api.ts";
+export * from "./distributions.ts";
+export * from "./projects.ts";
