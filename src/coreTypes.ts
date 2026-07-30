@@ -54,6 +54,9 @@ export interface RunEntry {
   running: PresenceProgress;
   stored: PresenceProgress;
   no_archive: boolean;
+  // Present on the backend but not yet consistently returned by every
+  // endpoint that yields a RunEntry.
+  deprecated?: boolean;
   run_params?: {
     instance_type: string;
     fds_version: string;
@@ -198,6 +201,7 @@ export interface FullDistribution {
   org_id: string;
   project: string | null;
   models: DistributionModel[];
+  creation_date?: Date;
 }
 
 export interface DistributionModel {
@@ -211,6 +215,7 @@ export interface ProjectEntry {
   id: Uuid;
   number: string;
   title?: string | null;
-  soft_limit?: [string, number] | null;
-  hard_limit?: [string, number] | null;
+  creation_date: string;
+  soft_limit?: number | null;
+  hard_limit?: number | null;
 }

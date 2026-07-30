@@ -14,22 +14,31 @@ function maybeDateOut(date: Date | undefined): string | undefined {
   return date ? date.toISOString() : undefined;
 }
 
+export type RunStatus =
+  | "created"
+  | "complete"
+  | "running"
+  | "queued"
+  | "processing"
+  | "failed";
+
 export class Run {
-  public runId: RunId;
-  public accountId: AccountId;
-  public chid: string;
-  public openTime: Date;
-  public closeTime?: Date;
-  public archived?: Date;
-  public updateTime?: Date;
-  public username?: string;
-  public project?: string;
-  public version: number;
-  public manualUpload: boolean;
-  public running: PresenceProgress;
-  public stored: PresenceProgress;
-  public noArchive: boolean;
-  public runParams?: {
+  public readonly runId: RunId;
+  public readonly accountId: AccountId;
+  public readonly chid: string;
+  public readonly openTime: Date;
+  public readonly closeTime?: Date;
+  public readonly archived?: Date;
+  public readonly updateTime?: Date;
+  public readonly username?: string;
+  public readonly project?: string;
+  public readonly version: number;
+  public readonly manualUpload: boolean;
+  public readonly running: PresenceProgress;
+  public readonly stored: PresenceProgress;
+  public readonly noArchive: boolean;
+  public readonly deprecated: boolean;
+  public readonly runParams?: {
     instance_type: string;
     fds_version: string;
     core_count: number;
@@ -54,8 +63,10 @@ export class Run {
     this.running = status.running;
     this.stored = status.stored;
     this.noArchive = status.no_archive;
+    this.deprecated = status.deprecated ?? false;
     this.runParams = status.run_params;
   }
+
   public runEntry(): RunEntry {
     return {
       run_id: this.runId,
@@ -71,6 +82,7 @@ export class Run {
       running: this.running,
       stored: this.stored,
       no_archive: this.noArchive,
+      deprecated: this.deprecated,
       run_params: this.runParams,
     };
   }
@@ -81,6 +93,11 @@ export class Run {
 
   public get isOpen(): boolean {
     return this.closeTime ? false : true;
+  }
+
+  /** Live means we want to show it as an active item that needs to be handled at some point. */
+  public get live(): boolean {
+    return this.isOpen;
   }
 }
 

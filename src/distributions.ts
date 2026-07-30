@@ -6,6 +6,7 @@ export class Distribution {
   public name: string;
   public org_id: string;
   public project: string | null;
+  public creation_date: Date;
   public models: DistributionModel[];
   constructor(
     accountId: string,
@@ -17,6 +18,7 @@ export class Distribution {
     this.org_id = status.org_id;
     this.project = status.project;
     this.models = status.models;
+    this.creation_date = status.creation_date ?? new Date();
   }
   public get id(): string {
     return this.key;

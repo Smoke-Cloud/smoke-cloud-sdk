@@ -36,6 +36,7 @@ import { Run } from "./runs.ts";
 import { isJsonApiErrorResponse, type ScApiErrorResponse } from "./utils.ts";
 import { Project } from "./projects.ts";
 import { Distribution } from "./distributions.ts";
+import type { PublicEventRecord, RunEvents } from "./runEvents.ts";
 export { isJsonApiErrorResponse, type ScApiErrorResponse } from "./utils.ts";
 export { Progress, Run } from "./runs.ts";
 export * from "./coreTypes.ts";
@@ -292,6 +293,13 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  public async events(runId: RunId): Promise<PublicEventRecord[]> {
+    const path = `/runs/${runId}/events`;
+    const resp = await this.request(path);
+    const r = await this.processResponseJsonApi<RunEvents>(resp);
+    return r.events;
+  }
+
   /** Get the current progress of a simulation. */
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
@@ -323,6 +331,12 @@ export class ApiClient {
   /** List the available snapshots associated with a simulation. */
   public async snapshots(runId: RunId): Promise<Snapshot[]> {
     const path = `/runs/${runId}/snapshots`;
+    const resp = await this.requestStorage(path);
+    return resp.json();
+  }
+
+  public async projectSpend(projectNumber: string): Promise<[string, number]> {
+    const path = `/projects/${projectNumber}/spend`;
     const resp = await this.requestStorage(path);
     return resp.json();
   }
@@ -635,6 +649,13 @@ export class ApiClient {
 
   public async kill(runId: string): Promise<string> {
     const resp = await this.request(`/runs/${runId}/kill`, { method: "PUT" });
+    return this.processResponseText(resp);
+  }
+
+  public async deprecate(runId: string): Promise<string> {
+    const resp = await this.request(`/runs/${runId}/deprecate`, {
+      method: "PUT",
+    });
     return this.processResponseText(resp);
   }
 }

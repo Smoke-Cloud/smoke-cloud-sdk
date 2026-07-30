@@ -30,6 +30,8 @@ export type {
 export type { AuthProvider } from "./authProviders/mod.ts";
 export type { DataVector, RunData } from "./getS3CSVData.ts";
 export { Progress, Run } from "./runs.ts";
+export type { RunStatus } from "./runs.ts";
+export type { PublicEvent, PublicEventRecord, RunEvents } from "./runEvents.ts";
 export * from "./coreTypes.ts";
 export * from "./getS3CSVData.ts";
 export * from "./authProviders/mod.ts";
