@@ -349,6 +349,19 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  public async setProjectTitle(
+    projectNumber: string,
+    projectName: string,
+  ): Promise<void> {
+    const path = `/orgs/${await this
+      .getAccountId()}/projects/${projectNumber}/title`;
+    const resp = await this.request(path, {
+      method: "PUT",
+      body: projectName,
+    });
+    return this.processResponseJsonApi(resp);
+  }
+
   public async setProjectDefaultFdsVersion(
     projectNumber: string,
     version: string,
