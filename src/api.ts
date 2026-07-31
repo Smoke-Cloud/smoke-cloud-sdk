@@ -338,7 +338,7 @@ export class ApiClient {
   /** List the available snapshots associated with a simulation. */
   public async snapshots(runId: RunId): Promise<Snapshot[]> {
     const path = `/runs/${runId}/snapshots`;
-    const resp = await this.requestStorage(path);
+    const resp = await this.request(path);
     return resp.json();
   }
 
