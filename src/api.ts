@@ -336,8 +336,29 @@ export class ApiClient {
   }
 
   public async projectSpend(projectNumber: string): Promise<[string, number]> {
-    const path = `/projects/${projectNumber}/spend`;
-    const resp = await this.requestStorage(path);
+    const path = `/orgs/${await this
+      .getAccountId()}/projects/${projectNumber}/spend`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  public async setProjectDefaultFdsVersion(
+    projectNumber: string,
+    version: string,
+  ): Promise<[string, number]> {
+    const path = `/orgs/${await this
+      .getAccountId()}/projects/${projectNumber}/default_versions/fds`;
+    const resp = await this.request(path, { method: "PUT", body: version });
+    return resp.json();
+  }
+
+  public async setProjectDefaultCfastVersion(
+    projectNumber: string,
+    version: string,
+  ): Promise<[string, number]> {
+    const path = `/orgs/${await this
+      .getAccountId()}/projects/${projectNumber}/default_versions/cfast`;
+    const resp = await this.request(path, { method: "PUT", body: version });
     return resp.json();
   }
 
