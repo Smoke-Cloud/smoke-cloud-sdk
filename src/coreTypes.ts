@@ -17,6 +17,7 @@ export interface ScError {
 export type RunId = string;
 export type Chid = string;
 export type AccountId = string;
+export type UploadId = string;
 
 export interface PublicRunningStatus {
   run_id: RunId;

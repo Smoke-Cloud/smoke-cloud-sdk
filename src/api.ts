@@ -13,6 +13,7 @@ import type {
   RunId,
   RunTimes,
   Snapshot,
+  UploadId,
   UserInfo,
 } from "./coreTypes.ts";
 export type {
@@ -304,6 +305,12 @@ export class ApiClient {
   public async progress(runId: RunId): Promise<ProgressInfo> {
     const path = `/runs/${runId}/progress`;
     const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  public async takeSnapshot(runId: RunId): Promise<UploadId> {
+    const path = `/runs/${runId}/uploads`;
+    const resp = await this.request(path, { method: "POST" });
     return this.processResponseJsonApi(resp);
   }
 
