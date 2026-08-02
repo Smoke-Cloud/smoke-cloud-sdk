@@ -362,6 +362,22 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  public async setProjectProjectBudget(
+    projectNumber: string,
+    budget: { softLimit: number | null; hardLimit: number | null },
+  ): Promise<void> {
+    const path = `/orgs/${await this
+      .getAccountId()}/projects/${projectNumber}/budget`;
+    const resp = await this.request(path, {
+      method: "PUT",
+      body: JSON.stringify({
+        soft_limit: budget.softLimit,
+        hard_limit: budget.hardLimit,
+      }),
+    });
+    return this.processResponseJsonApi(resp);
+  }
+
   public async setProjectDefaultFdsVersion(
     projectNumber: string,
     version: string,
