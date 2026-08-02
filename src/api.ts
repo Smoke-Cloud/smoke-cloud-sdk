@@ -87,6 +87,14 @@ export class ApiClient {
     }
   }
 
+  private url(path: string) {
+    if (path.length !== 0 && !path.startsWith("/")) {
+      path = `/${path}`;
+    }
+    const url = new URL(`${this.api_endpoint}${path}`);
+    return url;
+  }
+
   public async request(path: string, init?: RequestInit): Promise<Response> {
     const token = await this.authProvider?.acquireToken();
     const params = init ? init : {};
@@ -97,11 +105,8 @@ export class ApiClient {
       headers.append("Authorization", `Bearer ${token}`);
     }
     params.headers = headers;
-    if (path.length !== 0 && !path.startsWith("/")) {
-      path = `/${path}`;
-    }
-    const url = new URL(`${this.api_endpoint}${path}`);
-    const request = new Request(`${url}`, params);
+    const url = this.url(path);
+    const request = new Request(url, params);
     try {
       return await fetch(request, {
         "credentials": "include",
@@ -270,6 +275,12 @@ export class ApiClient {
       }
     }
     return latest;
+  }
+
+  public async users(): Promise<UserList> {
+    const path = `/orgs/${await this.getAccountId()}/users`;
+    const resp = await this.request(path);
+    return await this.processResponseJsonApi(resp);
   }
 
   /** Get the status of all running simulations. */
@@ -660,6 +671,36 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  public async billingRate(accountIdOverride?: string): Promise<CurrentRates> {
+    const accountId = accountIdOverride ?? await this.getAccountId();
+    const path = `/orgs/${accountId}/billing/rate`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  async getInvoices(
+    accountId: string,
+  ): Promise<PublicInvoiceSimple[]> {
+    const path = `/orgs/${accountId}/invoices`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  public invoiceLink(
+    accountId: string,
+    invoiceNumber: string,
+    kind: string,
+  ): string {
+    return this.url(`/orgs/${accountId}/invoices/${invoiceNumber}/${kind}`)
+      .toString();
+  }
+
+  public manageLink(
+    accountId: string,
+  ): string {
+    return this.url(`/orgs/${accountId}/billing/manage`).toString();
+  }
+
   public async outstandingTotal(): Promise<{
     currency: string;
     total: number;
@@ -927,6 +968,38 @@ export interface UploadProgressResult {
 }
 
 export type UploadStatus = "running" | "completed" | "failed";
+
+export interface CurrentRates {
+  instant: CurrentRate;
+  average: CurrentRate;
+}
+
+export interface CurrentRate {
+  per_hour: MoneyCentsCurrency;
+  per_day: MoneyCentsCurrency;
+  per_month: MoneyCentsCurrency;
+}
+
+export type MoneyCentsCurrency = [string, number];
+
+export interface PublicInvoiceSimple {
+  id: string;
+  created: Date;
+  number: string;
+  paid: boolean;
+  // pub period: Period,
+  total: [string, number];
+}
+
+// export enum Currency {
+//   Aud = "aud",
+//   Usd = "usd",
+//   Gbp = "gbp",
+// }
+
+export interface UserList {
+  users: UserInfo[];
+}
 
 // TODO: this is a polyfill and should be removed when possible.
 function readableStreamFromAsyncIterator<T>(
