@@ -99,7 +99,9 @@ export class ApiClient {
     const token = await this.authProvider?.acquireToken();
     const params = init ? init : {};
     const headers: Headers = new Headers(init?.headers);
-    headers.append("Content-Type", "application/json");
+    if (init?.method && init.body) {
+      headers.append("Content-Type", "application/json");
+    }
     headers.append("Access-Control-Request-Headers", "Location");
     if (token) {
       headers.append("Authorization", `Bearer ${token}`);
