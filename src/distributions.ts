@@ -6,7 +6,7 @@ export class Distribution {
   public name: string;
   public org_id: string;
   public project: string | null;
-  public creation_date: Date;
+  public created: Date;
   public models: DistributionModel[];
   constructor(
     accountId: string,
@@ -18,7 +18,9 @@ export class Distribution {
     this.org_id = status.org_id;
     this.project = status.project;
     this.models = status.models;
-    this.creation_date = status.creation_date ?? new Date();
+    this.created = status.creation_date
+      ? new Date(status.creation_date)
+      : new Date();
   }
   public get id(): string {
     return this.key;
@@ -31,9 +33,6 @@ export class Distribution {
   }
   public get shareUrl(): string {
     return `https://smokecloud.io/distribution/${this.accountId}/${this.shareToken}`;
-  }
-  public get created(): Date {
-    return new Date();
   }
 }
 
