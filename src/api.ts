@@ -850,7 +850,6 @@ export class RunEntryIter implements AsyncIterable<Run> {
         if (resp.ok) {
           const result: PagedResponse<RunEntry> =
             (await resp.json()) as PagedResponse<RunEntry>;
-          console.log(result.links);
           for (const r of result.data) {
             yield new Run(r);
           }
@@ -904,7 +903,6 @@ export class ProjectEntryIter implements AsyncIterable<Project> {
         if (resp.ok) {
           const result: PagedResponse<ProjectEntry> =
             (await resp.json()) as PagedResponse<ProjectEntry>;
-          console.log(result.links);
           for (const r of result.data) {
             yield new Project(r);
           }
@@ -959,7 +957,6 @@ export class DistributionsIter implements AsyncIterable<Distribution> {
         if (resp.ok) {
           const result: PagedResponse<FullDistribution> =
             (await resp.json()) as PagedResponse<FullDistribution>;
-          console.log(result.links);
           for (const r of result.data) {
             yield new Distribution(this.accountId, r);
           }
