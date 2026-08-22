@@ -391,6 +391,15 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  /** Permanently delete a project. Callers are responsible for only doing
+   * this for projects with no runs associated with them. */
+  public async deleteProject(projectNumber: string): Promise<void> {
+    const path = `/orgs/${await this
+      .getAccountId()}/projects/${projectNumber}`;
+    const resp = await this.request(path, { method: "DELETE" });
+    return this.processResponseJsonApi(resp);
+  }
+
   public async setProjectDefaultFdsVersion(
     projectNumber: string,
     version: string,
