@@ -49,6 +49,7 @@ export interface RunEntry {
   archived?: string;
   update_time?: string;
   username?: string;
+  project_id?: string;
   project_number?: string;
   version: number;
   manual_upload: boolean;

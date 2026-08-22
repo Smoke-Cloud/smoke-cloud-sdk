@@ -31,6 +31,7 @@ export class Run {
   public readonly archived?: Date;
   public readonly updateTime?: Date;
   public readonly username?: string;
+  public readonly projectId?: string;
   public readonly project?: string;
   public readonly version: number;
   public readonly manualUpload: boolean;
@@ -57,6 +58,7 @@ export class Run {
     this.archived = maybeDate(status.archived);
     this.updateTime = maybeDate(status.update_time);
     this.username = status.username;
+    this.projectId = status.project_id;
     this.project = status.project_number;
     this.version = status.version;
     this.manualUpload = status.manual_upload;

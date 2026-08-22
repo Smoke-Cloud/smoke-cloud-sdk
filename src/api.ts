@@ -758,6 +758,18 @@ export class ApiClient {
     });
     return this.processResponseText(resp);
   }
+
+  /** Move a run to a different project (by project number). */
+  public async setRunProject(
+    runId: string,
+    projectNumber: string,
+  ): Promise<string> {
+    const resp = await this.request(`/runs/${runId}/project`, {
+      method: "PUT",
+      body: projectNumber,
+    });
+    return this.processResponseText(resp);
+  }
 }
 
 class Follower implements AsyncIterable<Uint8Array> {
