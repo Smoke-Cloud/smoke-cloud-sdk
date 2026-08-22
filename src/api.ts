@@ -120,32 +120,6 @@ export class ApiClient {
     }
   }
 
-  private async requestStorage(
-    path: string,
-    init?: RequestInit,
-  ): Promise<Response> {
-    const token = await this.authProvider?.acquireToken();
-    const params = init ? init : {};
-    const headers: Headers = new Headers(init?.headers);
-    headers.append("Content-Type", "application/json");
-    headers.append("Access-Control-Request-Headers", "Location");
-    if (token) {
-      headers.append("Authorization", `Bearer ${token}`);
-    }
-    params.headers = headers;
-    if (path.length !== 0 && !path.startsWith("/")) {
-      path = `/${path}`;
-    }
-    const url = new URL(`${this.storage_endpoint}${path}`);
-    const request = new Request(`${url}`, params);
-    try {
-      return await fetch(request);
-    } catch (e) {
-      console.warn(`Failed: apiRequest[${params.method}]: ${url}`);
-      throw e;
-    }
-  }
-
   private async processError(response: Response): Promise<Error> {
     let errorResponse: ScApiErrorResponse | undefined;
     const errorResponseText: string = await response.text();
@@ -350,9 +324,9 @@ export class ApiClient {
 
   /** List the available snapshots associated with a simulation. */
   public async snapshots(runId: RunId): Promise<Snapshot[]> {
-    const path = `/runs/${runId}/snapshots`;
+    const path = `/runs/${runId}/snapshots/detailed`;
     const resp = await this.request(path);
-    return resp.json();
+    return this.processResponseJsonApi(resp);
   }
 
   public async projectSpend(projectNumber: string): Promise<[string, number]> {
@@ -421,15 +395,10 @@ export class ApiClient {
   }
 
   /** Get hte latest snapshot associated with a simulation. */
-  public async latestSnapshot(runId: RunId): Promise<Snapshot | undefined> {
-    const snapshots = await this.snapshots(runId);
-    let latest: Snapshot | undefined;
-    for (const snapshot of snapshots) {
-      if (!latest || latest.time < snapshot.time) {
-        latest = snapshot;
-      }
-    }
-    return latest;
+  public async latestSnapshot(runId: RunId): Promise<string | undefined> {
+    const path = `/runs/${runId}/snapshots/latest/id`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
   }
 
   public async snapshotContents(
@@ -437,8 +406,11 @@ export class ApiClient {
     snapshotId: string,
   ): Promise<string[]> {
     const path = `/runs/${runId}/snapshots/${snapshotId}/contents`;
-    const resp = await this.requestStorage(path);
-    return resp.json();
+    const resp = await this.request(path);
+    const filesObject: { files: string[] } = await this.processResponseJsonApi(
+      resp,
+    );
+    return filesObject.files;
   }
 
   public async snapshotFile(
@@ -447,7 +419,7 @@ export class ApiClient {
     p: string,
   ): Promise<ReadableStream<Uint8Array> | null> {
     const path = `/runs/${runId}/snapshots/${snapshotId}/contents/${p}`;
-    const resp = await this.requestStorage(path);
+    const resp = await this.request(path);
     return this.processResponseBody(resp);
   }
 
@@ -539,7 +511,7 @@ export class ApiClient {
 
   public async zip(runId: RunId): Promise<ReadableStream<Uint8Array> | null> {
     const path = `/runs/${runId}/zip`;
-    const resp = await this.requestStorage(path);
+    const resp = await this.request(path);
     return this.processResponseBody(resp);
   }
 
