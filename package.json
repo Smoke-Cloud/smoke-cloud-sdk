@@ -1,12 +1,13 @@
 {
   "name": "@smoke-cloud/sdk",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "license": "MIT",
   "type": "module",
   "exports": {
     "types": "./dist/mod.d.ts",
     "default": "./dist/mod.js"
   },
+  "files": ["dist"],
   "publishConfig": {
     "access": "public"
   },
