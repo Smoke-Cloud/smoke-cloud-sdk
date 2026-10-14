@@ -1,7 +1,8 @@
-import { assert } from "@std/assert";
 import { isJsonApiErrorResponse } from "./utils.ts";
+import { test } from "node:test";
+import assert from "node:assert";
 
-Deno.test("valid error reponse", () => {
+test("valid error reponse", () => {
   const example = {
     "errors": [{
       "code": "Other",
@@ -11,19 +12,3 @@ Deno.test("valid error reponse", () => {
   };
   assert(isJsonApiErrorResponse(example));
 });
-
-// import { delay } from "jsr:@std/async";
-
-// Deno.test("async test", async () => {
-//   const x = 1 + 2;
-//   await delay(100);
-//   assertEquals(x, 3);
-// });
-
-// Deno.test({
-//   name: "read file test",
-//   fn: () => {
-//     const data = Deno.readTextFileSync("./somefile.txt");
-//     assertEquals(data, "expected content");
-//   },
-// });

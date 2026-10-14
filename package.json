@@ -1,0 +1,28 @@
+{
+  "name": "@smoke-cloud/sdk",
+  "version": "0.1.13",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "types": "./dist/mod.d.ts",
+    "default": "./dist/mod.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "exclude": ["npm/"],
+  "compilerOptions": {
+    "erasableSyntaxOnly": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "test": "node --test src/**/*_test.ts",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  },
+  "lint": { "rules": { "exclude": ["require-await"] } }
+}
