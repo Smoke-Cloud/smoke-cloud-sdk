@@ -28,6 +28,7 @@ export class Run {
   public readonly username?: string;
   public readonly projectId?: string;
   public readonly project?: string;
+  public readonly title?: string;
   public readonly version: number;
   public readonly manualUpload: boolean;
   public readonly running: PresenceProgress;
@@ -60,6 +61,7 @@ export class Run {
     this.noArchive = status.no_archive;
     this.deprecated = status.deprecated ?? false;
     this.runParams = status.run_params;
+    this.title = status.title;
   }
 
   public runEntry(): RunEntry {
@@ -79,6 +81,7 @@ export class Run {
       no_archive: this.noArchive,
       deprecated: this.deprecated,
       run_params: this.runParams,
+      title: this.title,
     };
   }
 
