@@ -1,0 +1,4 @@
+dist/
+npm/
+browser/
+package-lock.json

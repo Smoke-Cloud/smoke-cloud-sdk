@@ -8,10 +8,7 @@ export class Distribution {
   public project: string | null;
   public created: Date;
   public models: DistributionModel[];
-  constructor(
-    accountId: string,
-    status: FullDistribution,
-  ) {
+  constructor(accountId: string, status: FullDistribution) {
     this.accountId = accountId;
     this.key = status.key;
     this.name = status.name;

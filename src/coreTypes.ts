@@ -94,9 +94,7 @@ export interface RunTimes {
 }
 
 export type PresenceProgress =
-  | PresenceProgressFull
-  | PresenceProgressEmpty
-  | PresenceProgressNone;
+  PresenceProgressFull | PresenceProgressEmpty | PresenceProgressNone;
 
 /** Convert a complex {@link PresenceProgress} to a more basic representation
  * of the current progress of a model. */
@@ -144,12 +142,7 @@ export interface ModelSummary {
 
 /** The available instance names. */
 export type InstanceType =
-  | "Cores1"
-  | "Cores2"
-  | "Cores4"
-  | "Cores8"
-  | "Cores16"
-  | "Cores32";
+  "Cores1" | "Cores2" | "Cores4" | "Cores8" | "Cores16" | "Cores32";
 
 /** The available core configurations. */
 export type NCores = 1 | 2 | 4 | 8 | 16 | 32;

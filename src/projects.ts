@@ -15,9 +15,7 @@ export class Project {
   public readonly softLimit: number | null;
   public readonly hardLimit: number | null;
 
-  constructor(
-    status: ProjectEntry,
-  ) {
+  constructor(status: ProjectEntry) {
     this.id = status.id;
     this.number = status.number;
     this.title = status.title ?? undefined;

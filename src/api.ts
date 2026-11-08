@@ -111,7 +111,7 @@ export class ApiClient {
     const request = new Request(url, params);
     try {
       return await fetch(request, {
-        "credentials": "include",
+        credentials: "include",
         // "mode": "same-origin",
       });
     } catch (e) {
@@ -181,13 +181,19 @@ export class ApiClient {
     if (resp.ok) {
       const user = await this.processResponseJsonApi(resp);
       if (
-        typeof user === "object" && user && "account_id" in user &&
+        typeof user === "object" &&
+        user &&
+        "account_id" in user &&
         typeof user.account_id === "string"
       ) {
         this.#accountId = user.account_id;
       } else if (
-        typeof user === "object" && user && "org" in user &&
-        typeof user.org === "object" && user.org && "account_id" in user.org &&
+        typeof user === "object" &&
+        user &&
+        "org" in user &&
+        typeof user.org === "object" &&
+        user.org &&
+        "account_id" in user.org &&
         typeof user.org.account_id === "string"
       ) {
         this.#accountId = user.org.account_id;
@@ -273,12 +279,8 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
-  public async setSimulationTitle(
-    chid: string,
-    title: string,
-  ): Promise<void> {
-    const path = `/orgs/${await this
-      .getAccountId()}/simulations/${encodeURIComponent(chid)}/title`;
+  public async setSimulationTitle(chid: string, title: string): Promise<void> {
+    const path = `/orgs/${await this.getAccountId()}/simulations/${encodeURIComponent(chid)}/title`;
     const resp = await this.request(path, {
       method: "PUT",
       body: title,
@@ -343,8 +345,7 @@ export class ApiClient {
   }
 
   public async projectSpend(projectNumber: string): Promise<[string, number]> {
-    const path = `/orgs/${await this
-      .getAccountId()}/projects/${projectNumber}/spend`;
+    const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}/spend`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
@@ -353,8 +354,7 @@ export class ApiClient {
     projectNumber: string,
     projectName: string,
   ): Promise<void> {
-    const path = `/orgs/${await this
-      .getAccountId()}/projects/${projectNumber}/title`;
+    const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}/title`;
     const resp = await this.request(path, {
       method: "PUT",
       body: projectName,
@@ -366,8 +366,7 @@ export class ApiClient {
     projectNumber: string,
     budget: { softLimit: number | null; hardLimit: number | null },
   ): Promise<void> {
-    const path = `/orgs/${await this
-      .getAccountId()}/projects/${projectNumber}/budget`;
+    const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}/budget`;
     const resp = await this.request(path, {
       method: "PUT",
       body: JSON.stringify({
@@ -381,8 +380,7 @@ export class ApiClient {
   /** Permanently delete a project. Callers are responsible for only doing
    * this for projects with no runs associated with them. */
   public async deleteProject(projectNumber: string): Promise<void> {
-    const path = `/orgs/${await this
-      .getAccountId()}/projects/${projectNumber}`;
+    const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}`;
     const resp = await this.request(path, { method: "DELETE" });
     return this.processResponseJsonApi(resp);
   }
@@ -391,8 +389,7 @@ export class ApiClient {
     projectNumber: string,
     version: string,
   ): Promise<[string, number]> {
-    const path = `/orgs/${await this
-      .getAccountId()}/projects/${projectNumber}/default_versions/fds`;
+    const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}/default_versions/fds`;
     const resp = await this.request(path, { method: "PUT", body: version });
     return resp.json();
   }
@@ -401,8 +398,7 @@ export class ApiClient {
     projectNumber: string,
     version: string,
   ): Promise<[string, number]> {
-    const path = `/orgs/${await this
-      .getAccountId()}/projects/${projectNumber}/default_versions/cfast`;
+    const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}/default_versions/cfast`;
     const resp = await this.request(path, { method: "PUT", body: version });
     return resp.json();
   }
@@ -420,9 +416,8 @@ export class ApiClient {
   ): Promise<string[]> {
     const path = `/runs/${runId}/snapshots/${snapshotId}/contents`;
     const resp = await this.request(path);
-    const filesObject: { files: string[] } = await this.processResponseJsonApi(
-      resp,
-    );
+    const filesObject: { files: string[] } =
+      await this.processResponseJsonApi(resp);
     return filesObject.files;
   }
 
@@ -531,8 +526,8 @@ export class ApiClient {
   public async memLog(runId: RunId): Promise<DataVector<Date, number> | null> {
     const path = `/runs/${runId}/log/mem`;
     const resp = await this.request(path);
-    const vector: DataVector<Date, number> | null = await this
-      .processResponseJsonApi(resp);
+    const vector: DataVector<Date, number> | null =
+      await this.processResponseJsonApi(resp);
     if (!vector) return null;
     vector.values = vector.values.map((p) => ({
       x: new Date(p.x),
@@ -544,8 +539,8 @@ export class ApiClient {
   public async cpuLog(runId: RunId): Promise<DataVector<Date, number> | null> {
     const path = `/runs/${runId}/log/cpu`;
     const resp = await this.request(path);
-    const vector: DataVector<Date, number> | null = await this
-      .processResponseJsonApi(resp);
+    const vector: DataVector<Date, number> | null =
+      await this.processResponseJsonApi(resp);
     if (!vector) return null;
     vector.values = vector.values.map((p) => ({
       x: new Date(p.x),
@@ -557,8 +552,8 @@ export class ApiClient {
   public async diskLog(runId: RunId): Promise<DataVector<Date, number> | null> {
     const path = `/runs/${runId}/log/disk`;
     const resp = await this.request(path);
-    const vector: DataVector<Date, number> | null = await this
-      .processResponseJsonApi(resp);
+    const vector: DataVector<Date, number> | null =
+      await this.processResponseJsonApi(resp);
     if (!vector) return null;
     vector.values = vector.values.map((p) => ({
       x: new Date(p.x),
@@ -614,9 +609,10 @@ export class ApiClient {
     if (!startParams.chid || startParams.chid.length === 0) {
       throw new Error("no CHID provided");
     }
-    const instanceType = typeof startParams.instance_type === "number"
-      ? coresToInstance(startParams.instance_type)
-      : startParams.instance_type;
+    const instanceType =
+      typeof startParams.instance_type === "number"
+        ? coresToInstance(startParams.instance_type)
+        : startParams.instance_type;
     const params: Record<string, string> = {
       chid: startParams.chid,
       fds_version: startParams.fds_version,
@@ -661,22 +657,20 @@ export class ApiClient {
   }
 
   public async outstanding(accountIdOverride?: string): Promise<RunBilling[]> {
-    const accountId = accountIdOverride ?? await this.getAccountId();
+    const accountId = accountIdOverride ?? (await this.getAccountId());
     const path = `/orgs/${accountId}/billing/outstanding`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
 
   public async billingRate(accountIdOverride?: string): Promise<CurrentRates> {
-    const accountId = accountIdOverride ?? await this.getAccountId();
+    const accountId = accountIdOverride ?? (await this.getAccountId());
     const path = `/orgs/${accountId}/billing/rate`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
   }
 
-  async getInvoices(
-    accountId: string,
-  ): Promise<PublicInvoiceSimple[]> {
+  async getInvoices(accountId: string): Promise<PublicInvoiceSimple[]> {
     const path = `/orgs/${accountId}/invoices`;
     const resp = await this.request(path);
     return this.processResponseJsonApi(resp);
@@ -687,13 +681,12 @@ export class ApiClient {
     invoiceNumber: string,
     kind: string,
   ): string {
-    return this.url(`/orgs/${accountId}/invoices/${invoiceNumber}/${kind}`)
-      .toString();
+    return this.url(
+      `/orgs/${accountId}/invoices/${invoiceNumber}/${kind}`,
+    ).toString();
   }
 
-  public manageLink(
-    accountId: string,
-  ): string {
+  public manageLink(accountId: string): string {
     return this.url(`/orgs/${accountId}/billing/manage`).toString();
   }
 

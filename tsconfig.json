@@ -3,9 +3,7 @@
     "rootDir": "src",
     "target": "esnext",
     "module": "nodenext",
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "strict": true,
     "outDir": "dist",
     "declaration": true,
@@ -14,7 +12,5 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "exclude": [
-    "./npm"
-  ]
+  "exclude": ["./npm"]
 }

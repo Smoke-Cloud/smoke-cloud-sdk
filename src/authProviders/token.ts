@@ -3,8 +3,7 @@ export class TokenAuthProvider {
   constructor(token: string) {
     this.#token = token;
   }
-  async init() {
-  }
+  async init() {}
 
   async acquireToken(): Promise<string> {
     return this.#token;

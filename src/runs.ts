@@ -15,12 +15,7 @@ function maybeDateOut(date: Date | undefined): string | undefined {
 }
 
 export type RunStatus =
-  | "created"
-  | "complete"
-  | "running"
-  | "queued"
-  | "processing"
-  | "failed";
+  "created" | "complete" | "running" | "queued" | "processing" | "failed";
 
 export class Run {
   public readonly runId: RunId;
@@ -47,9 +42,7 @@ export class Run {
     n_processes?: number;
     n_threads?: number;
   };
-  constructor(
-    status: RunEntry,
-  ) {
+  constructor(status: RunEntry) {
     this.runId = status.run_id;
     this.accountId = status.sim_id.account_id;
     this.chid = status.sim_id.chid;
