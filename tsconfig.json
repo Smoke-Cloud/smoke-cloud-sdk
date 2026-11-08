@@ -13,5 +13,8 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "./npm"
+  ]
 }

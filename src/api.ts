@@ -273,6 +273,19 @@ export class ApiClient {
     return this.processResponseJsonApi(resp);
   }
 
+  public async setSimulationTitle(
+    chid: string,
+    title: string,
+  ): Promise<void> {
+    const path = `/orgs/${await this
+      .getAccountId()}/simulations/${encodeURIComponent(chid)}/title`;
+    const resp = await this.request(path, {
+      method: "PUT",
+      body: title,
+    });
+    return this.processResponseJsonApi(resp);
+  }
+
   /** Get how long a simulation either has been running or how long it took to
    * run. */
   public async times(runId: RunId): Promise<RunTimes> {

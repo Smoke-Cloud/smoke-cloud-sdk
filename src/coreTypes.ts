@@ -59,6 +59,7 @@ export interface RunEntry {
   // Present on the backend but not yet consistently returned by every
   // endpoint that yields a RunEntry.
   deprecated?: boolean;
+  title?: string;
   run_params?: {
     instance_type: string;
     fds_version: string;

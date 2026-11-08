@@ -7,11 +7,15 @@
     "types": "./dist/mod.d.ts",
     "default": "./dist/mod.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "access": "public"
   },
-  "exclude": ["npm/"],
+  "exclude": [
+    "npm/"
+  ],
   "compilerOptions": {
     "erasableSyntaxOnly": true
   },
@@ -25,5 +29,11 @@
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2"
   },
-  "lint": { "rules": { "exclude": ["require-await"] } }
+  "lint": {
+    "rules": {
+      "exclude": [
+        "require-await"
+      ]
+    }
+  }
 }
