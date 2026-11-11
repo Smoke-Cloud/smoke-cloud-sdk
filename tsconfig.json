@@ -12,5 +12,5 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "exclude": ["./npm"]
+  "exclude": ["./npm", "./dist"]
 }

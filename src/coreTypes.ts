@@ -207,6 +207,50 @@ export interface DistributionModel {
   size: number | null;
 }
 
+/**
+ * A workspace: simulations (whole CHIDs, not individual runs) gathered from
+ * any of an org's projects for analysing and reviewing together. Its
+ * simulations are those in the projects it includes whole (a simulation is in
+ * the project of its most recent run), plus those it includes explicitly,
+ * minus those it excludes explicitly. Two workspaces can include the same
+ * simulations.
+ */
+export interface Workspace {
+  id: Uuid;
+  name: string;
+  creation_time: string;
+  update_time: string;
+}
+
+/** A simulation in a workspace. */
+export interface WorkspaceSimulation {
+  chid: string;
+  /** The project of the simulation's most recent run. */
+  project_number: string | null;
+  /** Whether the workspace includes it explicitly, rather than through its
+   * project. */
+  explicit: boolean;
+}
+
+/** A workspace, what it includes and excludes, and the simulations that makes
+ * up. */
+export interface WorkspaceDetails extends Workspace {
+  /** Projects included whole. */
+  project_numbers: string[];
+  /** Simulations included explicitly. */
+  included_chids: string[];
+  /** Simulations excluded explicitly. */
+  excluded_chids: string[];
+  /** The simulations in the workspace. */
+  simulations: WorkspaceSimulation[];
+}
+
+/** A tab open on the console's simulations page: a project or a workspace. */
+export interface WorkspaceTab {
+  kind: "project" | "workspace";
+  id: Uuid;
+}
+
 export interface ProjectEntry {
   id: Uuid;
   number: string;

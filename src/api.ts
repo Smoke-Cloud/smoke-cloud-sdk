@@ -15,6 +15,9 @@ import type {
   Snapshot,
   UploadId,
   UserInfo,
+  Workspace,
+  WorkspaceDetails,
+  WorkspaceTab,
 } from "./coreTypes.ts";
 export type {
   CurrentUsage,
@@ -286,6 +289,90 @@ export class ApiClient {
       body: title,
     });
     return this.processResponseJsonApi(resp);
+  }
+
+  /** The org's workspaces, by name. */
+  public async workspaces(): Promise<Workspace[]> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** Create an empty workspace. Names must be 1 to 200 characters. */
+  public async createWorkspace(name: string): Promise<Workspace> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces`;
+    const resp = await this.request(path, { method: "POST", body: name });
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** A workspace, what it includes and excludes, and its simulations. */
+  public async workspace(id: string): Promise<WorkspaceDetails> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces/${encodeURIComponent(id)}`;
+    const resp = await this.request(path);
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** Rename a workspace. Names must be 1 to 200 characters. */
+  public async renameWorkspace(id: string, name: string): Promise<void> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces/${encodeURIComponent(id)}/name`;
+    const resp = await this.request(path, { method: "PUT", body: name });
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** Delete a workspace. Its simulations aren't affected. */
+  public async deleteWorkspace(id: string): Promise<void> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces/${encodeURIComponent(id)}`;
+    const resp = await this.request(path, { method: "DELETE" });
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** Include every simulation in a project in a workspace, including ones
+   * added to the project later, or stop including the project. */
+  public async setWorkspaceProject(
+    id: string,
+    projectNumber: string,
+    include: boolean,
+  ): Promise<void> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces/${encodeURIComponent(id)}/projects/${encodeURIComponent(projectNumber)}`;
+    const resp = await this.request(path, {
+      method: include ? "PUT" : "DELETE",
+    });
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** Include (`"include"`) or exclude (`"exclude"`) a simulation in a
+   * workspace explicitly, or remove its explicit entry (`null`), so whether
+   * its project is included decides. Including or excluding needs the org to
+   * have runs with that CHID. */
+  public async setWorkspaceSimulation(
+    id: string,
+    chid: string,
+    entry: "include" | "exclude" | null,
+  ): Promise<void> {
+    const path = `/orgs/${await this.getAccountId()}/workspaces/${encodeURIComponent(id)}/simulations/${encodeURIComponent(chid)}`;
+    const resp = await this.request(
+      path,
+      entry ? { method: "PUT", body: entry } : { method: "DELETE" },
+    );
+    return this.processResponseJsonApi(resp);
+  }
+
+  /** The projects and workspaces the user has open as tabs on the console's
+   * simulations page, in order. */
+  public async workspaceTabs(): Promise<WorkspaceTab[]> {
+    const resp = await this.request("/me/workspace_tabs");
+    return tabsFromResponse(await this.processResponseJsonApi(resp));
+  }
+
+  /** Replace the user's tabs, in order. Duplicates, and projects and
+   * workspaces outside the user's org, are dropped. Returns the tabs as
+   * stored. */
+  public async setWorkspaceTabs(tabs: WorkspaceTab[]): Promise<WorkspaceTab[]> {
+    const resp = await this.request("/me/workspace_tabs", {
+      method: "PUT",
+      body: JSON.stringify({ tabs }),
+    });
+    return tabsFromResponse(await this.processResponseJsonApi(resp));
   }
 
   /** Get how long a simulation either has been running or how long it took to
@@ -1041,3 +1128,15 @@ export const fdsVersions = [
   "6.10.0",
   "6.10.1",
 ];
+
+/** Tabs from a /me/workspace_tabs response. An API from before tabs could be
+ * workspaces only sends `project_ids`. */
+function tabsFromResponse(data: {
+  project_ids?: string[];
+  tabs?: WorkspaceTab[];
+}): WorkspaceTab[] {
+  return (
+    data.tabs ??
+    (data.project_ids ?? []).map((id) => ({ kind: "project" as const, id }))
+  );
+}
