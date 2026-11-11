@@ -55,7 +55,6 @@ export interface RunFilter {
 
 export class ApiClient {
   public api_endpoint: URL = new URL("https://api.smokecloud.io/v5");
-  public storage_endpoint: URL = new URL("https://store01.smokecloud.io/v3");
   #accountId?: string;
   private initialized: boolean = false;
   private authProvider: AuthProvider | null;
@@ -64,15 +63,11 @@ export class ApiClient {
     authProvider: AuthProvider | null,
     options?: {
       api_endpoint?: string;
-      storage_endpoint?: string;
     },
   ) {
     this.authProvider = authProvider;
     if (options?.api_endpoint) {
       this.api_endpoint = new URL(options.api_endpoint);
-    }
-    if (options?.storage_endpoint) {
-      this.storage_endpoint = new URL(options.storage_endpoint);
     }
   }
 
