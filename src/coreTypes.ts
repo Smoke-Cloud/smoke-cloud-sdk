@@ -140,29 +140,65 @@ export interface ModelSummary {
   runs: RunEntry[];
 }
 
-/** The available instance names. */
-export type InstanceType =
-  "Cores1" | "Cores2" | "Cores4" | "Cores8" | "Cores16" | "Cores32";
+/** A number of cores a run can use: 1 to {@link MAX_CORES}. */
+export type NCores =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14
+  | 15
+  | 16
+  | 17
+  | 18
+  | 19
+  | 20
+  | 21
+  | 22
+  | 23
+  | 24
+  | 25
+  | 26
+  | 27
+  | 28
+  | 29
+  | 30
+  | 31
+  | 32;
 
-/** The available core configurations. */
-export type NCores = 1 | 2 | 4 | 8 | 16 | 32;
+/** The most cores a run can use. */
+export const MAX_CORES = 32;
 
-/** Convert a number of cores to an instance name. */
+/** The memory a run gets for each of its cores, in GiB. */
+export const MEM_GIB_PER_CORE = 4;
+
+/** Whether `n` is a number of cores a run can use: a whole number from 1 to
+ * {@link MAX_CORES}. */
+export function isCoreCount(n: number): n is NCores {
+  return Number.isInteger(n) && n >= 1 && n <= MAX_CORES;
+}
+
+/** The available instance names, "Cores1" to "Cores32". */
+export type InstanceType = `Cores${NCores}`;
+
+/** Convert a number of cores to an instance name. Throws a RangeError for a
+ * number that isn't a whole number from 1 to {@link MAX_CORES}. */
 export function coresToInstance(nCores: NCores): InstanceType {
-  switch (nCores) {
-    case 1:
-      return "Cores1";
-    case 2:
-      return "Cores2";
-    case 4:
-      return "Cores4";
-    case 8:
-      return "Cores8";
-    case 16:
-      return "Cores16";
-    case 32:
-      return "Cores32";
+  if (!isCoreCount(nCores)) {
+    throw new RangeError(
+      `A run can use 1 to ${MAX_CORES} cores, not ${nCores}`,
+    );
   }
+  return `Cores${nCores}`;
 }
 
 /** The different phases of a run. */
