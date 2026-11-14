@@ -6,6 +6,7 @@ import type {
   OrgLogos,
   Phase,
   ProgressInfo,
+  NewProject,
   ProjectEntry,
   PublicRunningStatus,
   RunBilling,
@@ -461,6 +462,25 @@ export class ApiClient {
 
   /** Permanently delete a project. Callers are responsible for only doing
    * this for projects with no runs associated with them. */
+  /**
+   * Create a project. Its number must be new to the organisation: letters,
+   * digits, "-", "_" and ".", up to 32 characters. Budget limits are in minor
+   * units (e.g. pence).
+   */
+  public async createProject(project: NewProject): Promise<Project> {
+    const path = `/orgs/${await this.getAccountId()}/projects`;
+    const resp = await this.request(path, {
+      method: "POST",
+      body: JSON.stringify({
+        number: project.number,
+        title: project.title,
+        soft_limit: project.softLimit,
+        hard_limit: project.hardLimit,
+      }),
+    });
+    return new Project(await this.processResponseJsonApi<ProjectEntry>(resp));
+  }
+
   public async deleteProject(projectNumber: string): Promise<void> {
     const path = `/orgs/${await this.getAccountId()}/projects/${projectNumber}`;
     const resp = await this.request(path, { method: "DELETE" });

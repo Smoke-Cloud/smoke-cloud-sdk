@@ -287,6 +287,15 @@ export interface WorkspaceTab {
   id: Uuid;
 }
 
+/** A project to create (see `ApiClient.createProject`). */
+export interface NewProject {
+  number: string;
+  title?: string;
+  /** Budget limits, in minor units (e.g. pence). */
+  softLimit?: number;
+  hardLimit?: number;
+}
+
 export interface ProjectEntry {
   id: Uuid;
   number: string;
@@ -294,4 +303,15 @@ export interface ProjectEntry {
   creation_date: string;
   soft_limit?: number | null;
   hard_limit?: number | null;
+  /** Spend so far, as [currency, minor units]; null if it has no runs.
+   * Absent from APIs from before this was added. */
+  spend?: [string, number] | null;
+  /** Bytes stored now; null if it has nothing stored. */
+  storage?: ProjectStorage | null;
+}
+
+/** How much a project has stored, in bytes. */
+export interface ProjectStorage {
+  standard: number;
+  archived: number;
 }
